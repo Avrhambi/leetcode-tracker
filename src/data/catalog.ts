@@ -12,4 +12,4 @@ export const catalog: CatalogProblem[] = rows.map((row, index) => ({
   neetcodeOrder: index + 1
 }));
 
-export const CATALOG_VERSION = 'neetcode-150-v1';
+export const CATALOG_VERSION = 'neetcode-150-v3';

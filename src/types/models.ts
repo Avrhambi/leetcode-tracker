@@ -10,3 +10,4 @@ export interface ProblemProgress { problemId: string; status: ProgressStatus; re
 export interface Attempt { id: string; problemId: string; attemptedOn: string; outcome: Outcome; perceivedDifficulty: PerceivedDifficulty; helpType: HelpType | null; durationMinutes: number | null; notes: string; quality: Quality; createdAt: string; }
 export interface RecommendationEvent { id: string; problemId: string; kind: 'new' | 'review'; recommendedAt: string; skippedUntil: string | null; }
 export interface AppSetting { key: 'catalogVersion'; value: string; }
+export interface BackupPayload { formatVersion: 1; exportedAt: string; progress: ProblemProgress[]; attempts: Attempt[]; recommendationEvents: RecommendationEvent[]; settings: AppSetting[]; }
