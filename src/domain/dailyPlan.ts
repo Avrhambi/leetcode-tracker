@@ -24,6 +24,23 @@ export function selectDailyPlan({ problems, progress, recommendationEvents, now 
   const progressByProblem = new Map(progress.map((item) => [item.problemId, item]));
   const problemById = new Map(problems.map((problem) => [problem.id, problem]));
   const hiddenProblemIds = new Set(recommendationEvents.filter((event) => event.skippedUntil !== null && new Date(event.skippedUntil) > now).map((event) => event.problemId));
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const todayRecommendations = recommendationEvents.filter((event) => new Date(event.recommendedAt) >= startOfToday && event.skippedUntil === null);
+  if (todayRecommendations.length > 0) {
+    const seenProblemIds = new Set<string>();
+    const plan: DailyPlanItem[] = todayRecommendations
+      .filter((event) => !hiddenProblemIds.has(event.problemId) && !seenProblemIds.has(event.problemId) && seenProblemIds.add(event.problemId))
+      .map((event) => ({ problem: problemById.get(event.problemId), kind: event.kind }))
+      .filter((item): item is DailyPlanItem => item.problem !== undefined)
+      .sort((left, right) => left.kind.localeCompare(right.kind) || left.problem.neetcodeOrder - right.problem.neetcodeOrder)
+      .slice(0, 2);
+    while (plan.length < 2) {
+      const nextProblem = selectNewProblem(problems, progressByProblem, recommendationEvents, hiddenProblemIds, new Set(plan.map((item) => item.problem.id)), problemById, now);
+      if (!nextProblem) break;
+      plan.push({ problem: nextProblem, kind: 'new' });
+    }
+    return plan;
+  }
   const reviews = problems
     .filter((problem) => !hiddenProblemIds.has(problem.id))
     .filter((problem) => {
@@ -34,9 +51,7 @@ export function selectDailyPlan({ problems, progress, recommendationEvents, now 
     .slice(0, 2)
     .map((problem) => ({ problem, kind: 'review' as const }));
 
-  const selectedProblemIds = new Set(reviews.map((item) => item.problem.id));
-  const newProblem = selectNewProblem(problems, progressByProblem, recommendationEvents, hiddenProblemIds, selectedProblemIds, problemById, now);
-  const plan = newProblem ? [...reviews, { problem: newProblem, kind: 'new' as const }] : reviews;
+  const plan: DailyPlanItem[] = [...reviews];
 
   while (plan.length < 2) {
     const nextProblem = selectNewProblem(problems, progressByProblem, recommendationEvents, hiddenProblemIds, new Set(plan.map((item) => item.problem.id)), problemById, now);

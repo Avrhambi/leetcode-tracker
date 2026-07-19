@@ -26,7 +26,7 @@ function isAttempt(value: unknown): value is Attempt {
 }
 
 function isRecommendationEvent(value: unknown): value is RecommendationEvent {
-  return isRecord(value) && isString(value.id) && isString(value.problemId) && isOneOf(value.kind, eventKinds) && isString(value.recommendedAt) && isNullableString(value.skippedUntil);
+  return isRecord(value) && isString(value.id) && isString(value.problemId) && isOneOf(value.kind, eventKinds) && isString(value.recommendedAt) && isNullableString(value.skippedUntil) && (value.completedAt === undefined || isNullableString(value.completedAt));
 }
 
 function isSetting(value: unknown): value is AppSetting {

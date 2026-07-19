@@ -13,9 +13,9 @@ const progress = (problemId: string, changes: Partial<ProblemProgress>): Problem
 const event = (problemId: string, kind: RecommendationEvent['kind'], recommendedAt: string, skippedUntil: string | null = null): RecommendationEvent => ({ id: `${problemId}-${recommendedAt}`, problemId, kind, recommendedAt, skippedUntil });
 
 describe('daily plan selection', () => {
-  it('puts up to two earliest due reviews before a new problem', () => {
+  it('limits the daily challenge to the two earliest due reviews', () => {
     const result = selectDailyPlan({ problems, progress: [progress('c', { nextReviewDate: '2026-07-19' }), progress('b', { nextReviewDate: '2026-07-18' }), progress('a', { nextReviewDate: '2026-07-17' })], recommendationEvents: [], now });
-    expect(result.map((item) => `${item.kind}:${item.problem.id}`)).toEqual(['review:a', 'review:b', 'new:d']);
+    expect(result.map((item) => `${item.kind}:${item.problem.id}`)).toEqual(['review:a', 'review:b']);
   });
   it('uses topic attempt counts, gates difficulty, and avoids the last two new topics', () => {
     const result = selectDailyPlan({ problems, progress: [progress('a', { strongAttemptCount: 2 })], recommendationEvents: [event('a', 'new', '2026-07-18T09:00:00.000Z')], now });
@@ -29,5 +29,33 @@ describe('daily plan selection', () => {
     const result = selectDailyPlan({ problems, progress: [], recommendationEvents: [], now });
     expect(result).toHaveLength(2);
     expect(new Set(result.map((item) => item.problem.id)).size).toBe(2);
+  });
+  it('keeps today’s recommended challenges after their progress changes', () => {
+    const result = selectDailyPlan({
+      problems,
+      progress: [progress('a', { status: 'solved' }), progress('d', { status: 'solved' })],
+      recommendationEvents: [event('a', 'new', '2026-07-19T10:00:00.000Z'), event('d', 'new', '2026-07-19T10:00:00.000Z')],
+      now
+    });
+    expect(result.map((item) => item.problem.id)).toEqual(['a', 'd']);
+  });
+  it('fills an incomplete current-day plan without replacing its existing recommendation', () => {
+    const result = selectDailyPlan({
+      problems,
+      progress: [],
+      recommendationEvents: [event('a', 'new', '2026-07-19T10:00:00.000Z')],
+      now
+    });
+    expect(result).toHaveLength(2);
+    expect(result[0]?.problem.id).toBe('a');
+  });
+  it('shows only two problems when more current-day recommendations were previously saved', () => {
+    const result = selectDailyPlan({
+      problems,
+      progress: [],
+      recommendationEvents: [event('a', 'new', '2026-07-19T10:00:00.000Z'), event('b', 'new', '2026-07-19T10:00:00.000Z'), event('c', 'new', '2026-07-19T10:00:00.000Z')],
+      now
+    });
+    expect(result).toHaveLength(2);
   });
 });
