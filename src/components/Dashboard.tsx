@@ -41,14 +41,27 @@ export function Dashboard({ attempts, problems, progress }: DashboardProps) {
       <article><strong>{dueReviews}</strong><span>Due reviews</span></article>
     </div>
     <section className="topic-progress" aria-labelledby="topic-progress-heading">
-      <h2 id="topic-progress-heading">Topic progress</h2>
-      <div className="topic-table" role="table" aria-label="Topic progress">
-        <div className="topic-row topic-header" role="row"><span role="columnheader">Topic</span><span role="columnheader">Attempted</span><span role="columnheader">Strong attempts</span><span role="columnheader">Mastered</span></div>
-        {topics.map((topic) => {
-          const topicProgress = problems.filter((problem) => problem.primaryTopic === topic).map((problem) => progressById.get(problem.id)).filter((item): item is ProblemProgress => item !== undefined);
-          return <div className="topic-row" role="row" key={topic}><span role="cell">{topic}</span><span role="cell">{topicProgress.length}</span><span role="cell">{topicProgress.reduce((count, item) => count + item.strongAttemptCount, 0)}</span><span role="cell">{topicProgress.filter((item) => item.status === 'mastered').length}</span></div>;
-        })}
+      <div className="topic-progress-heading">
+        <div><p className="eyebrow">Practice map</p><h2 id="topic-progress-heading">Topic progress</h2></div>
+        <p>Each bar shows problems attempted in that topic.</p>
       </div>
+      <ul className="topic-grid" aria-label="Topic progress">
+        {topics.map((topic) => {
+          const topicProblems = problems.filter((problem) => problem.primaryTopic === topic);
+          const topicProgress = topicProblems.map((problem) => progressById.get(problem.id)).filter((item): item is ProblemProgress => item !== undefined);
+          const attempted = topicProgress.length;
+          const strongAttempts = topicProgress.reduce((count, item) => count + item.strongAttemptCount, 0);
+          const mastered = topicProgress.filter((item) => item.status === 'mastered').length;
+          return <li className="topic-card" key={topic}>
+            <div className="topic-card-topline"><h3>{topic}</h3><strong>{attempted}<span>/{topicProblems.length}</span></strong></div>
+            <progress value={attempted} max={topicProblems.length} aria-label={`${topic}: ${attempted} of ${topicProblems.length} problems attempted`} />
+            <div className="topic-stats">
+              <span className="topic-stat topic-stat-strong"><i aria-hidden="true">◆</i><b>{strongAttempts}</b> strong</span>
+              <span className="topic-stat topic-stat-mastered"><i aria-hidden="true">✓</i><b>{mastered}</b> mastered</span>
+            </div>
+          </li>;
+        })}
+      </ul>
     </section>
   </section>;
 }
