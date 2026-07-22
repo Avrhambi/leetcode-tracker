@@ -1,0 +1,51 @@
+/* Hallmark · macrostructure: Workbench · tone: brutalist technical · anchor hue: phosphor green
+ * theme: Terminal · genre: modern-minimal · enrichment: none · nav: N8 · footer: Ft4
+ * audience: solo developer · use: daily recommendation-led practice
+ * pre-emit critique: P5 H4 E5 S5 R4 V4
+ */
+:root {
+  --color-paper: oklch(15% 0.014 155);
+  --color-paper-2: oklch(19% 0.018 155);
+  --color-paper-3: oklch(25% 0.022 155);
+  --color-ink: oklch(94% 0.025 145);
+  --color-ink-2: oklch(84% 0.035 145);
+  --color-muted: oklch(73% 0.04 145);
+  --color-neutral: oklch(80% 0.025 145);
+  --color-accent: oklch(84% 0.19 145);
+  --color-accent-deep: oklch(71% 0.17 145);
+  --color-accent-ink: oklch(16% 0.02 155);
+  --color-focus: oklch(88% 0.18 100);
+  --color-rule: oklch(42% 0.04 150);
+  --color-rule-2: oklch(53% 0.045 150);
+  --color-success: oklch(78% 0.15 145);
+  --color-warning: oklch(82% 0.16 85);
+  --color-error: oklch(70% 0.2 25);
+  --font-display: "Arial Narrow", "Roboto Condensed", Impact, sans-serif;
+  --font-body: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --font-outlier: var(--font-body);
+  --text-2xs: 0.625rem;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.5rem;
+  --text-2xl: 2rem;
+  --text-display: clamp(2.5rem, 7vw, 5.75rem);
+  --space-2xs: 0.25rem;
+  --space-xs: 0.5rem;
+  --space-sm: 0.75rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+  --space-3xl: 4.5rem;
+  --dur-short: 120ms;
+  --dur-medium: 180ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --rule-hair: 1px;
+  --radius-none: 0;
+  --radius-input: 0.125rem;
+  --radius-card: 0.25rem;
+}

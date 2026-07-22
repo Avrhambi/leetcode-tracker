@@ -1,0 +1,9 @@
+{
+  "date": "2026-07-20",
+  "framework": "React 19 + TypeScript + Vite",
+  "fontStack": "Inter, ui-sans-serif, system-ui, sans-serif",
+  "palette": "#1d2633, #f7f8fa, #4169e1 in src/styles/global.css",
+  "motion": "motion-cut; no motion library installed",
+  "spacing": "ad hoc CSS spacing; no existing token scale",
+  "preserve": ["React component ownership", "IndexedDB behavior", "existing English copy"]
+}
