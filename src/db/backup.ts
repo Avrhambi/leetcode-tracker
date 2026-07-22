@@ -35,7 +35,7 @@ function isSetting(value: unknown): value is AppSetting {
 
 export function validateBackupPayload(value: unknown): BackupPayload {
   if (!isRecord(value) || value.formatVersion !== 1 || !isString(value.exportedAt) || !Array.isArray(value.progress) || !Array.isArray(value.attempts) || !Array.isArray(value.recommendationEvents) || !Array.isArray(value.settings) || !value.progress.every(isProgress) || !value.attempts.every(isAttempt) || !value.recommendationEvents.every(isRecommendationEvent) || !value.settings.every(isSetting)) {
-    throw new Error('This file is not a valid Pattern Pilot backup.');
+    throw new Error('This file is not a valid LeetCode Tracker backup.');
   }
   return value as unknown as BackupPayload;
 }
