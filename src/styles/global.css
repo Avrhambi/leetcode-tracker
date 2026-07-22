@@ -58,7 +58,7 @@ button, input, select, textarea, a { transition: background-color var(--dur-shor
 .app-header { display: grid; gap: var(--space-xl); align-items: end; margin-bottom: var(--space-3xl); padding-block: var(--space-lg); border-block: var(--rule-hair) solid var(--color-rule); }
 .app-intro { min-width: 0; }
 .app-header .eyebrow, .eyebrow { color: var(--color-accent); font-family: var(--font-body); font-size: var(--text-xs); letter-spacing: 0.08em; }
-.app-header h1 { max-width: 10ch; margin: 0; font-size: var(--text-display); text-transform: uppercase; }
+.app-header h1 { max-width: none; margin: 0; font-size: var(--text-display); text-transform: uppercase; overflow-wrap: normal; word-break: keep-all; }
 .app-lede { max-width: 44rem; margin: var(--space-md) 0 0; font-size: var(--text-sm); }
 .terminal-nav { display: flex; flex-wrap: nowrap; align-items: center; gap: var(--space-xs); padding-block: var(--space-sm); border-block: var(--rule-hair) solid var(--color-rule); font-size: var(--text-sm); white-space: nowrap; }
 .terminal-prompt, .terminal-caret { color: var(--color-accent); font-weight: 700; }
