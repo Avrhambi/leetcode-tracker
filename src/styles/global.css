@@ -104,6 +104,8 @@ button, input, select, textarea, a { transition: background-color var(--dur-shor
 .daily-challenge-actions { gap: var(--space-xs); }
 .completed-challenge { color: var(--color-ink); background: var(--color-paper-3); border-color: var(--color-success) !important; }
 .challenge-status { color: var(--color-accent-ink); background: var(--color-success); border-radius: var(--radius-none); }
+.struggling-badge { color: var(--color-error); font-weight: 700; }
+.attempt-notes { margin: var(--space-2xs) 0 0; color: var(--color-neutral); font-size: var(--text-sm); }
 
 .filters { gap: var(--space-sm); margin-bottom: var(--space-xl); }
 .filters label, .attempt-form label, .settings label { color: var(--color-ink-2); font-size: var(--text-sm); }
