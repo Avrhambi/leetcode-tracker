@@ -13,9 +13,20 @@ const progress = (problemId: string, changes: Partial<ProblemProgress>): Problem
 const event = (problemId: string, kind: RecommendationEvent['kind'], recommendedAt: string, skippedUntil: string | null = null): RecommendationEvent => ({ id: `${problemId}-${recommendedAt}`, problemId, kind, recommendedAt, skippedUntil });
 
 describe('daily plan selection', () => {
-  it('limits the daily challenge to the two earliest due reviews', () => {
+  it('leads with the two earliest due reviews and still adds a new problem', () => {
     const result = selectDailyPlan({ problems, progress: [progress('c', { nextReviewDate: '2026-07-19' }), progress('b', { nextReviewDate: '2026-07-18' }), progress('a', { nextReviewDate: '2026-07-17' })], recommendationEvents: [], now });
-    expect(result.map((item) => `${item.kind}:${item.problem.id}`)).toEqual(['review:a', 'review:b']);
+    expect(result.slice(0, 2).map((item) => `${item.kind}:${item.problem.id}`)).toEqual(['review:a', 'review:b']);
+    expect(result).toHaveLength(3);
+    expect(result[2]?.kind).toBe('new');
+  });
+  it('orders due reviews by weakest last quality before most overdue', () => {
+    const result = selectDailyPlan({
+      problems,
+      progress: [progress('a', { nextReviewDate: '2026-07-10', lastQuality: 'strong' }), progress('b', { nextReviewDate: '2026-07-18', lastQuality: 'weak' })],
+      recommendationEvents: [],
+      now
+    });
+    expect(result[0]?.problem.id).toBe('b');
   });
   it('uses topic attempt counts, gates difficulty, and avoids the last two new topics', () => {
     const result = selectDailyPlan({ problems, progress: [progress('a', { strongAttemptCount: 2 })], recommendationEvents: [event('a', 'new', '2026-07-18T09:00:00.000Z')], now });
@@ -49,13 +60,24 @@ describe('daily plan selection', () => {
     expect(result).toHaveLength(2);
     expect(result[0]?.problem.id).toBe('a');
   });
-  it('shows only two problems when more current-day recommendations were previously saved', () => {
+  it('replays every distinct recommendation saved today, capped at four', () => {
     const result = selectDailyPlan({
       problems,
       progress: [],
       recommendationEvents: [event('a', 'new', '2026-07-19T10:00:00.000Z'), event('b', 'new', '2026-07-19T10:00:00.000Z'), event('c', 'new', '2026-07-19T10:00:00.000Z')],
       now
     });
-    expect(result).toHaveLength(2);
+    expect(result.map((item) => item.problem.id)).toEqual(['a', 'b', 'c']);
+  });
+  it('always includes at least one new problem when the plan has capacity', () => {
+    const result = selectDailyPlan({
+      problems,
+      progress: [progress('a', { nextReviewDate: '2026-07-18' }), progress('b', { nextReviewDate: '2026-07-18' }), progress('c', { nextReviewDate: '2026-07-18' })],
+      recommendationEvents: [],
+      now
+    });
+    expect(result.some((item) => item.kind === 'new')).toBe(true);
+    expect(result.length).toBeGreaterThanOrEqual(2);
+    expect(result.length).toBeLessThanOrEqual(4);
   });
 });
