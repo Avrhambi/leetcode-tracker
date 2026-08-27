@@ -97,4 +97,27 @@ describe('replayXp', () => {
   it('is 0 for an empty history', () => {
     expect(replayXp([])).toBe(0);
   });
+
+  // The live path (saveAttempt) computes isFirstOfDay by counting attempt rows
+  // already stored for this problem + attemptedOn. This folds a history the same
+  // way and must land on the same lifetime total replayXp reports.
+  it('agrees with an incremental live-award fold, including a backdated attempt', () => {
+    const history: Attempt[] = [
+      attempt({ id: 'a', problemId: 'p1', attemptedOn: '2026-08-01', quality: 'strong', createdAt: '2026-08-01T09:00:00.000Z' }),
+      attempt({ id: 'b', problemId: 'p1', attemptedOn: '2026-08-01', quality: 'weak', createdAt: '2026-08-01T20:00:00.000Z' }),
+      attempt({ id: 'c', problemId: 'p2', attemptedOn: '2026-08-02', quality: 'partial', createdAt: '2026-08-02T09:00:00.000Z' }),
+      // logged on the 3rd but backdated to the 1st — a fresh problem-day
+      attempt({ id: 'd', problemId: 'p1', attemptedOn: '2026-07-30', quality: 'strong', createdAt: '2026-08-03T09:00:00.000Z' })
+    ];
+
+    let liveTotal = 0;
+    const stored: Attempt[] = [];
+    for (const next of history) {
+      const isFirstOfDay = !stored.some((a) => a.problemId === next.problemId && a.attemptedOn === next.attemptedOn);
+      liveTotal += xpForAttempt(next.quality, isFirstOfDay);
+      stored.push(next);
+    }
+
+    expect(replayXp(history)).toBe(liveTotal);
+  });
 });
