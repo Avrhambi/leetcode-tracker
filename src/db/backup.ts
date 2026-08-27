@@ -7,6 +7,13 @@ const helpTypes = ['small_hint', 'pattern_identification', 'pseudocode', 'full_c
 const qualities = ['strong', 'partial', 'weak'];
 const statuses = ['not_started', 'attempted', 'solved', 'mastered'];
 const eventKinds = ['new', 'review'];
+const settingKeys = ['catalogVersion', 'streakGraceRemaining', 'streakGraceRefreshedOn', 'lastActiveOn'];
+
+// Progress fields added in backup formatVersion 2. A v1 payload omits them; they
+// are defaulted on restore, matching the Dexie v2 migration backfill.
+function withProgressDefaults(row: ProblemProgress): ProblemProgress {
+  return { ...row, consecutiveWeak: row.consecutiveWeak ?? 0, struggling: row.struggling ?? false };
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -18,7 +25,10 @@ function isOneOf(value: unknown, options: string[]): boolean { return isString(v
 function isInteger(value: unknown): value is number { return typeof value === 'number' && Number.isInteger(value); }
 
 function isProgress(value: unknown): value is ProblemProgress {
-  return isRecord(value) && isString(value.problemId) && isOneOf(value.status, statuses) && isInteger(value.reviewStage) && value.reviewStage >= 0 && value.reviewStage <= 5 && isNullableString(value.nextReviewDate) && isNullableString(value.lastAttemptDate) && (value.lastQuality === null || isOneOf(value.lastQuality, qualities)) && isInteger(value.strongAttemptCount) && value.strongAttemptCount >= 0 && isString(value.updatedAt);
+  return isRecord(value) && isString(value.problemId) && isOneOf(value.status, statuses) && isInteger(value.reviewStage) && value.reviewStage >= 0 && value.reviewStage <= 5 && isNullableString(value.nextReviewDate) && isNullableString(value.lastAttemptDate) && (value.lastQuality === null || isOneOf(value.lastQuality, qualities)) && isInteger(value.strongAttemptCount) && value.strongAttemptCount >= 0 && isString(value.updatedAt)
+    // formatVersion 2 fields: present and well-typed, or absent (v1 payload).
+    && (value.consecutiveWeak === undefined || (isInteger(value.consecutiveWeak) && value.consecutiveWeak >= 0))
+    && (value.struggling === undefined || typeof value.struggling === 'boolean');
 }
 
 function isAttempt(value: unknown): value is Attempt {
@@ -30,11 +40,11 @@ function isRecommendationEvent(value: unknown): value is RecommendationEvent {
 }
 
 function isSetting(value: unknown): value is AppSetting {
-  return isRecord(value) && value.key === 'catalogVersion' && isString(value.value);
+  return isRecord(value) && isOneOf(value.key, settingKeys) && isString(value.value);
 }
 
 export function validateBackupPayload(value: unknown): BackupPayload {
-  if (!isRecord(value) || value.formatVersion !== 1 || !isString(value.exportedAt) || !Array.isArray(value.progress) || !Array.isArray(value.attempts) || !Array.isArray(value.recommendationEvents) || !Array.isArray(value.settings) || !value.progress.every(isProgress) || !value.attempts.every(isAttempt) || !value.recommendationEvents.every(isRecommendationEvent) || !value.settings.every(isSetting)) {
+  if (!isRecord(value) || (value.formatVersion !== 1 && value.formatVersion !== 2) || !isString(value.exportedAt) || !Array.isArray(value.progress) || !Array.isArray(value.attempts) || !Array.isArray(value.recommendationEvents) || !Array.isArray(value.settings) || !value.progress.every(isProgress) || !value.attempts.every(isAttempt) || !value.recommendationEvents.every(isRecommendationEvent) || !value.settings.every(isSetting)) {
     throw new Error('This file is not a valid LeetCode Tracker backup.');
   }
   return value as unknown as BackupPayload;
@@ -44,7 +54,7 @@ export async function createBackupPayload(): Promise<BackupPayload> {
   const [progress, attempts, recommendationEvents, settings] = await Promise.all([
     db.progress.toArray(), db.attempts.toArray(), db.recommendationEvents.toArray(), db.settings.toArray()
   ]);
-  return { formatVersion: 1, exportedAt: new Date().toISOString(), progress, attempts, recommendationEvents, settings };
+  return { formatVersion: 2, exportedAt: new Date().toISOString(), progress, attempts, recommendationEvents, settings };
 }
 
 export async function restoreBackup(file: File): Promise<void> {
@@ -53,7 +63,7 @@ export async function restoreBackup(file: File): Promise<void> {
   await db.transaction('rw', db.progress, db.attempts, db.recommendationEvents, db.settings, async () => {
     await Promise.all([db.progress.clear(), db.attempts.clear(), db.recommendationEvents.clear(), db.settings.clear()]);
     await Promise.all([
-      db.progress.bulkPut(payload.progress),
+      db.progress.bulkPut(payload.progress.map(withProgressDefaults)),
       db.attempts.bulkPut(payload.attempts),
       db.recommendationEvents.bulkPut(payload.recommendationEvents),
       db.settings.bulkPut(payload.settings)

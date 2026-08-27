@@ -9,7 +9,7 @@ const problems: CatalogProblem[] = [
   { id: 'd', title: 'D', slug: 'd', leetcodeUrl: 'https://leetcode.com/problems/d/', difficulty: 'easy', topics: ['Trees'], primaryTopic: 'Trees', neetcodeOrder: 4 }
 ];
 const now = new Date(2026, 6, 19, 12);
-const progress = (problemId: string, changes: Partial<ProblemProgress>): ProblemProgress => ({ problemId, status: 'attempted', reviewStage: 0, nextReviewDate: null, lastAttemptDate: null, lastQuality: null, strongAttemptCount: 0, updatedAt: '', ...changes });
+const progress = (problemId: string, changes: Partial<ProblemProgress>): ProblemProgress => ({ problemId, status: 'attempted', reviewStage: 0, nextReviewDate: null, lastAttemptDate: null, lastQuality: null, strongAttemptCount: 0, consecutiveWeak: 0, struggling: false, updatedAt: '', ...changes });
 const event = (problemId: string, kind: RecommendationEvent['kind'], recommendedAt: string, skippedUntil: string | null = null): RecommendationEvent => ({ id: `${problemId}-${recommendedAt}`, problemId, kind, recommendedAt, skippedUntil });
 
 describe('daily plan selection', () => {
