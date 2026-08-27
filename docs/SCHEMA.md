@@ -72,6 +72,14 @@ export interface AppSetting {
   value: string;
 }
 
+// Single-row store (key: 'state'). Only lifetime `xp` is persisted; the level is
+// derived on read (services/gamification.ts) so it cannot drift from xp.
+export interface GamificationState {
+  key: 'state';
+  xp: number;        // total lifetime XP
+  updatedAt: string;
+}
+
 export interface BackupPayload {
   formatVersion: 1 | 2;   // v2 adds ProblemProgress.consecutiveWeak / .struggling
   exportedAt: string;     // and the streak settings keys; a v1 file restores with
@@ -79,6 +87,9 @@ export interface BackupPayload {
   attempts: Attempt[];
   recommendationEvents: RecommendationEvent[];
   settings: AppSetting[];
+  gamification?: GamificationState;  // optional within v2 — a coach-fixes-era
+                                     // backup has none; rebuilt from `attempts`
+                                     // on restore when absent
 }
 
 export const dexieStores = {
@@ -86,11 +97,34 @@ export const dexieStores = {
   progress: '&problemId, status, nextReviewDate, lastAttemptDate',
   attempts: '&id, problemId, attemptedOn, createdAt',
   recommendationEvents: '&id, problemId, kind, recommendedAt, skippedUntil',
-  settings: '&key'
+  settings: '&key',
+  gamification: '&key'   // added in v3
 } as const;
 // Dexie versions: v1 initial; v2 backfills consecutiveWeak/struggling on progress
 // (no index change). The streak settings rows are not seeded and currently not
 // written — the dashboard defaults the grace allowance when they are absent and
 // re-derives usage from the active dates, so reset / v1-restore need no reseed.
-// v3 (later PR) adds a gamification store.
+// v3 adds the `gamification` store and seeds it by replaying lifetime XP from the
+// full `attempts` history (its own version — Dexie never re-runs a v2 upgrade for
+// an existing v2 user). Fresh installs are created at v3 and skip the callback;
+// the reader defaults to { xp: 0 } when the row is absent.
 ```
+
+### XP and levels
+
+XP is awarded per attempt, atomically inside `saveAttempt`'s transaction, and is
+a pure function of the stored `Attempt` row — its `quality` and whether it is the
+first attempt for that problem on that calendar day. No new-vs-review multiplier:
+`kind` lives on `RecommendationEvent`, not `Attempt`, so the v3 replay could not
+reconstruct it.
+
+| quality | first of day | same-day repeat |
+|---------|--------------|-----------------|
+| strong  | 20           | 5               |
+| partial | 12           | 3               |
+| weak    | 5            | 1               |
+
+`level = floor(sqrt(xp / 50))` — level 1 at 50 XP, 2 at 200, 3 at 450, 4 at 800.
+`replayXp(attempts)` folds the whole history (sorted by `createdAt` then `id` for
+a deterministic result) and is shared by the v3 upgrade and by backup restore
+when the payload carries no gamification row.

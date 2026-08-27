@@ -34,6 +34,13 @@
 - Record an attempt yesterday but none today: the streak still shows the run ending yesterday, not 0.
 - Reset all data, reseed, and record one attempt: the streak shows 1 with no grace note (the grace settings rows are absent and default cleanly).
 
+## XP and levels
+- Record a strong first attempt of the day: the dashboard XP strip rises by 20 without a reload.
+- Record a second attempt for the same problem the same day: XP rises by 5 (the reinforcement quarter), not 20.
+- Reload the page: the level and XP are unchanged.
+- With the OS set to reduced motion, confirm the XP fill bar jumps rather than sliding.
+- Open an app that was on a pre-gamification (coach-fixes) build with existing attempts: on first load the XP strip shows a non-zero total replayed from the attempt history.
+
 ## Problems and links
 - Search waits briefly, then matches titles and slugs case-insensitively.
 - Combine topic, difficulty, and status filters; clear them and recover NeetCode order.
@@ -41,8 +48,9 @@
 - Confirm no problem statement or solution text is stored or displayed.
 
 ## Backup, restore, and failures
-- Export data, reset, restore the export, and confirm all user data returns.
+- Export data, reset, restore the export, and confirm all user data returns, XP included.
 - Restore a pre-v2 backup file: it succeeds, and every problem's `consecutiveWeak` / `struggling` default to 0 / false.
+- Restore a v2 backup that has no gamification row: it succeeds and XP is rebuilt from the restored attempts.
 - Reject a file over 5 MB, malformed JSON, an unsupported format version, and invalid fields without changing existing data.
 - Simulate blocked IndexedDB and confirm an inline error with a working explicit Retry action.
 - Confirm reset does nothing until `RESET` is typed exactly.

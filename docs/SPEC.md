@@ -27,12 +27,25 @@ If an attempt for the same problem already exists on the same calendar day (from
 After three consecutive weak attempts on one problem it is flagged `struggling`. While the consecutive-weak run is at three or more, a further weak attempt schedules the next review on a 2-, 4-, 7-day ladder instead of the next day, so a persistent blind spot is not surfaced daily; a non-weak attempt resets the run and the next weak attempt starts the ladder over from the next day. For the new-problem topic pick, a `struggling` problem contributes a neutral 0.5 to its topic's mastery instead of its reset-to-0 stage, so the plan stops flooding new problems from a topic the user is stuck in — but the difficulty ceiling still uses the real stage, so a topic being failed never unlocks its harder problems. A strong attempt clears the flag; a partial attempt stops the weak run without clearing it.
 
 ## Screens
-Dashboard shows today’s plan, current streak, attempts in the last 7 calendar days, due-review count, and per-topic attempted/strong/mastered counts. Problems shows all 150 items with 200 ms search, topic/difficulty/status filters, and NeetCode order by default. Problem detail shows metadata, external LeetCode link, attempt history newest first, next review, and record-attempt action. Settings provides JSON export, JSON restore, and reset-all-data.
+Dashboard shows an XP/level strip, today’s plan, current streak, attempts in the last 7 calendar days, due-review count, and per-topic attempted/strong/mastered counts. Problems shows all 150 items with 200 ms search, topic/difficulty/status filters, and NeetCode order by default. Problem detail shows metadata, external LeetCode link, attempt history newest first, next review, and record-attempt action. Settings provides JSON export, JSON restore, and reset-all-data.
 
 ## Streak
 The dashboard streak counts consecutive calendar days with at least one recorded attempt, up to and including the last active day — so a day without practice yet does not zero the streak, it holds at the run ending on the last active day. A returning user does not lose the whole streak on the first missed day: one grace day is always available and is spent automatically to bridge a single gap. Grace does not stretch to two adjacent missed days, and it is only ever counted as used once a later active day is actually reached — a gap before the user's first-ever attempt bridges nothing. Two or more consecutive missed days reset the streak to the run that follows the gap.
 
 The grace refresh cadence (`refreshGrace`: one grant per rolling seven active days, capped at one) lives in `services/streak.ts` but is currently unobservable — the allowance is never spent down in storage, so it always reads as one. The `settings` rows (`streakGraceRemaining`, `streakGraceRefreshedOn`) hold the allowance and are read with that default when absent (fresh install, reset, version-1 restore); the dashboard does not write them back. Grace usage is re-derived from the active dates on every render, so the streak is stable across re-renders. When grace bridged a gap, the dashboard notes how many grace days the current streak used.
 
+## XP and levels
+Every recorded attempt awards XP inside the same transaction that writes the
+attempt: 20 / 12 / 5 for a strong / partial / weak first attempt of the day on
+that problem, and a quarter of that (5 / 3 / 1) for a later same-day attempt on
+the same problem. There is no bonus for a new problem versus a review — the award
+is a pure function of the stored attempt row, so lifetime XP can be rebuilt
+exactly by replaying the attempt history (done once by the Dexie `version(3)`
+upgrade for existing users, and on backup restore when the payload predates
+gamification). Level is `floor(sqrt(xp / 50))` — 50 XP to level 1, 200 to 2, 450
+to 3 — and is derived on read, never stored. The dashboard shows a level / XP
+strip above the metric grid; its fill bar transitions on XP change and is clamped
+by `prefers-reduced-motion`.
+
 ## States and limits
-Initial seeding shows a blocking loading state. Empty search/filter results show “No matching problems.” Successful saves update the screen immediately and show a message for 2 seconds. Database or file failures show an inline error and Retry; no automatic retry. Export contains all local user data as a `formatVersion` 2 payload. Restore accepts one `.json` file up to 5 MB of format version 1 or 2, validates the full payload before replacing data, defaults the version-2 fields when restoring a version-1 file, and leaves existing data unchanged on failure. Reset requires typing `RESET` exactly. No pagination is used for the 150-problem catalog.
+Initial seeding shows a blocking loading state. Empty search/filter results show “No matching problems.” Successful saves update the screen immediately and show a message for 2 seconds. Database or file failures show an inline error and Retry; no automatic retry. Export contains all local user data as a `formatVersion` 2 payload, including the gamification XP row when present. Restore accepts one `.json` file up to 5 MB of format version 1 or 2, validates the full payload before replacing data, defaults the version-2 fields when restoring a version-1 file, rebuilds lifetime XP from the restored attempts when the payload carries no gamification row, and leaves existing data unchanged on failure. Reset requires typing `RESET` exactly. No pagination is used for the 150-problem catalog.
