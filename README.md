@@ -82,4 +82,4 @@ ready to go.
 
 See [`docs/`](docs/) for the full specification (`SPEC.md`), data model
 (`SCHEMA.md`), and the design rationale behind the adaptive algorithm
-(`design/adaptive-coach-and-gamification.md`).
+(`design/algorithm.md`).
