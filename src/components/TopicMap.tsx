@@ -13,16 +13,46 @@ interface TopicMapProps {
 // and fill track that topic's mastery; a struggling topic gets a warning ring.
 // Deliberately banded, not a dependency DAG. Nodes are buttons: click opens the
 // topic's problems in the side panel.
-const CELL_W = 116;
-const ROW_H = 92;
-const PAD_X = 12;
-const PAD_TOP = 8;
+//
+// Each band is a CSS grid of fixed-size cells; the dot is a small self-contained
+// SVG and the label is plain HTML, so wrapping is width-driven with no viewBox
+// scaling and labels stay legible at every width.
+const NODE_BOX = 44; // px viewBox for one node's dot
 
-function labelLines(topic: string): string[] {
-  const words = topic.split(' ');
-  if (words.length < 3) return [topic];
-  const mid = Math.ceil(words.length / 2);
-  return [words.slice(0, mid).join(' '), words.slice(mid).join(' ')];
+function Node({ cell, struggling, selected, onSelect }: {
+  cell: TopicMasteryCell;
+  struggling: boolean;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  const c = NODE_BOX / 2;
+  const r = 5 + cell.mastery * 11;
+  const filled = cell.mastery >= 0.5;
+  const pct = Math.round(cell.mastery * 100);
+  const classes = ['topic-node', filled ? 'filled' : '', struggling ? 'struggling' : '', selected ? 'selected' : '']
+    .filter(Boolean).join(' ');
+
+  return <div
+    className={classes}
+    role="button"
+    tabIndex={0}
+    aria-pressed={selected}
+    aria-label={`${cell.topic}: ${pct}% mastery, ${cell.attempted} of ${cell.total} attempted${struggling ? ', needs a different approach' : ''}`}
+    onClick={onSelect}
+    onKeyDown={(event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        onSelect();
+      }
+    }}
+  >
+    <svg className="topic-node-dot-svg" viewBox={`0 0 ${NODE_BOX} ${NODE_BOX}`} aria-hidden="true">
+      {selected && <circle className="topic-node-ring" cx={c} cy={c} r={r + 6} />}
+      {struggling && <circle className="topic-node-warn" cx={c} cy={c} r={r + 3} />}
+      <circle className="topic-node-dot" cx={c} cy={c} r={r} />
+    </svg>
+    <span className="topic-node-label">{cell.topic}</span>
+  </div>;
 }
 
 function Band({ tier, cells, strugglingTopics, selectedTopic, onSelectTopic }: {
@@ -33,47 +63,20 @@ function Band({ tier, cells, strugglingTopics, selectedTopic, onSelectTopic }: {
   onSelectTopic: (topic: string) => void;
 }) {
   if (cells.length === 0) return null;
-  const width = cells.length * CELL_W + PAD_X * 2;
-  const height = ROW_H + PAD_TOP;
 
   return <div className="tier-band">
     <p className="tier-band-label eyebrow">{TIER_LABELS[tier]}</p>
-    <svg viewBox={`0 0 ${width} ${height}`} role="group" aria-label={`${TIER_LABELS[tier]} topics`}>
-      {cells.map((cell, index) => {
-        const cx = PAD_X + index * CELL_W + CELL_W / 2;
-        const cy = PAD_TOP + 26;
-        const r = 5 + cell.mastery * 11;
-        const filled = cell.mastery >= 0.5;
-        const struggling = strugglingTopics.has(cell.topic);
-        const selected = cell.topic === selectedTopic;
-        const classes = ['topic-node', filled ? 'filled' : '', struggling ? 'struggling' : '', selected ? 'selected' : ''].filter(Boolean).join(' ');
-        const pct = Math.round(cell.mastery * 100);
-        return <g
+    <div className="tier-band-nodes" role="group" aria-label={`${TIER_LABELS[tier]} topics`}>
+      {cells.map((cell) => (
+        <Node
           key={cell.topic}
-          className={classes}
-          role="button"
-          tabIndex={0}
-          aria-pressed={selected}
-          aria-label={`${cell.topic}: ${pct}% mastery, ${cell.attempted} of ${cell.total} attempted${struggling ? ', needs a different approach' : ''}`}
-          onClick={() => onSelectTopic(cell.topic)}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter' || event.key === ' ') {
-              event.preventDefault();
-              onSelectTopic(cell.topic);
-            }
-          }}
-        >
-          {selected && <circle className="topic-node-ring" cx={cx} cy={cy} r={r + 6} />}
-          {struggling && <circle className="topic-node-warn" cx={cx} cy={cy} r={r + 3} />}
-          <circle className="topic-node-dot" cx={cx} cy={cy} r={r} />
-          <text className="topic-node-label" x={cx} y={cy + 30} textAnchor="middle">
-            {labelLines(cell.topic).map((line, lineIndex) => (
-              <tspan key={line} x={cx} dy={lineIndex === 0 ? 0 : 11}>{line}</tspan>
-            ))}
-          </text>
-        </g>;
-      })}
-    </svg>
+          cell={cell}
+          struggling={strugglingTopics.has(cell.topic)}
+          selected={cell.topic === selectedTopic}
+          onSelect={() => onSelectTopic(cell.topic)}
+        />
+      ))}
+    </div>
   </div>;
 }
 

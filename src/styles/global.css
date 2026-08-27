@@ -47,18 +47,19 @@ button, input, select, textarea, a { transition: background-color var(--dur-shor
 .topic-map > .eyebrow { margin-bottom: var(--space-2xs); }
 .topic-map-hint { margin-bottom: var(--space-lg); color: var(--color-muted); font-size: var(--text-xs); }
 .tier-band + .tier-band { margin-top: var(--space-md); padding-top: var(--space-md); border-top: var(--rule-hair) solid var(--color-rule); }
-.tier-band-label { margin-bottom: var(--space-2xs); }
-.tier-band svg { display: block; width: 100%; height: auto; overflow: visible; }
-.topic-node { cursor: pointer; }
+.tier-band-label { margin-bottom: var(--space-xs); }
+.tier-band-nodes { display: grid; grid-template-columns: repeat(auto-fill, minmax(5.5rem, 1fr)); gap: var(--space-sm) var(--space-2xs); justify-items: center; }
+.topic-node { display: flex; flex-direction: column; align-items: center; gap: var(--space-2xs); width: 100%; padding: var(--space-2xs) 0; cursor: pointer; }
 .topic-node:focus-visible { outline: none; }
 .topic-node:focus-visible .topic-node-dot { stroke: var(--color-focus); stroke-width: 2.5; }
+.topic-node-dot-svg { display: block; width: 2.75rem; height: 2.75rem; overflow: visible; }
 .topic-node-dot { fill: var(--color-paper-3); stroke: var(--color-rule-2); stroke-width: 1.5; transition: fill var(--dur-medium) var(--ease-out), r var(--dur-medium) var(--ease-out); }
 .topic-node.filled .topic-node-dot { fill: var(--color-accent); stroke: var(--color-accent); }
 .topic-node.struggling .topic-node-dot { fill: var(--color-error); stroke: var(--color-error); }
 .topic-node-warn { fill: none; stroke: var(--color-error); stroke-width: 1.5; stroke-dasharray: 3 3; }
 .topic-node-ring { fill: none; stroke: var(--color-accent); stroke-width: 2; }
-.topic-node-label { fill: var(--color-neutral); font-family: var(--font-body); font-size: 10px; }
-.topic-node.selected .topic-node-label { fill: var(--color-ink); }
+.topic-node-label { color: var(--color-neutral); font-family: var(--font-body); font-size: var(--text-xs); line-height: 1.2; text-align: center; }
+.topic-node.selected .topic-node-label { color: var(--color-ink); }
 @media (hover: hover) and (pointer: fine) {
   .topic-node:hover .topic-node-dot { fill: var(--color-accent-deep); stroke: var(--color-accent-deep); }
 }
