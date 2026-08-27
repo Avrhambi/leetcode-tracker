@@ -45,9 +45,10 @@ function isSetting(value: unknown): value is AppSetting {
 }
 
 // Optional in a v2 payload: a backup taken by a coach-fixes-era build has no
-// gamification row, and it must still restore.
+// gamification row, and one taken before the visuals slice has no `badges`.
 function isGamificationState(value: unknown): value is GamificationState {
-  return isRecord(value) && value.key === 'state' && isInteger(value.xp) && value.xp >= 0 && isString(value.updatedAt);
+  return isRecord(value) && value.key === 'state' && isInteger(value.xp) && value.xp >= 0 && isString(value.updatedAt)
+    && (value.badges === undefined || (Array.isArray(value.badges) && value.badges.every(isString)));
 }
 
 export function validateBackupPayload(value: unknown): BackupPayload {
@@ -77,9 +78,12 @@ export async function restoreBackup(file: File): Promise<void> {
     ]);
     // A v2 backup from a coach-fixes-era build carries no gamification row —
     // rebuild lifetime XP from the restored attempts so it is never left showing
-    // the previous profile's total (or, on a fresh v3 store, zero).
+    // the previous profile's total (or, on a fresh v3 store, zero). Badges are
+    // not replayed (they need the streak clock and are self-healing on the next
+    // attempt); a payload without them restores with none.
     const gamification: GamificationState = payload.gamification
-      ?? { key: 'state', xp: replayXp(payload.attempts), updatedAt: new Date().toISOString() };
+      ? { ...payload.gamification, badges: payload.gamification.badges ?? [] }
+      : { key: 'state', xp: replayXp(payload.attempts), badges: [], updatedAt: new Date().toISOString() };
     await db.gamification.put(gamification);
   });
 }
