@@ -38,8 +38,16 @@
 - Record a strong first attempt of the day: the dashboard XP strip rises by 20 without a reload.
 - Record a second attempt for the same problem the same day: XP rises by 5 (the reinforcement quarter), not 20.
 - Reload the page: the level and XP are unchanged.
-- With the OS set to reduced motion, confirm the XP fill bar's slide is clamped to a brief 150 ms rather than a longer ease.
+- With the OS set to reduced motion, confirm the XP fill bar's slide is clamped to a brief 150 ms rather than a longer ease, and the level-up pulse and sweep do not play.
 - Open an app that was on a pre-gamification (coach-fixes) build with existing attempts: on first load the XP strip shows a non-zero total replayed from the attempt history.
+- Cross a level boundary while on the dashboard: the level number pulses once. Cross one while on Today, then return: no pulse (accepted — nothing stores what was announced).
+
+## Badges, constellation, and needs-attention
+- Solve a first problem: the "First solve" badge fills and fades in; the shelf reads 1 / 6.
+- Take a problem to mastered, then drive it to three weak attempts: the "First mastered" badge stays earned (monotonic), and the problem appears in "Needs a different approach".
+- With no struggling problems, "Needs a different approach" shows the all-clear message.
+- The constellation renders one node per topic (18), larger and filled for more-mastered topics; long topic names wrap to two lines without overlap.
+- Restore a backup with no badge data: the shelf starts empty and re-fills after the next attempt.
 
 ## Problems and links
 - Search waits briefly, then matches titles and slugs case-insensitively.
@@ -50,7 +58,8 @@
 ## Backup, restore, and failures
 - Export data, reset, restore the export, and confirm all user data returns, XP included.
 - Restore a pre-v2 backup file: it succeeds, and every problem's `consecutiveWeak` / `struggling` default to 0 / false.
-- Restore a v2 backup that has no gamification row: it succeeds and XP is rebuilt from the restored attempts.
+- Restore a v2 backup that has no gamification row: it succeeds, XP is rebuilt from the restored attempts, and badges start empty.
+- Restore a v2 backup whose gamification row carries a badges array: the shelf shows exactly those badges.
 - Reject a file over 5 MB, malformed JSON, an unsupported format version, and invalid fields without changing existing data.
 - Simulate blocked IndexedDB and confirm an inline error with a working explicit Retry action.
 - Confirm reset does nothing until `RESET` is typed exactly.

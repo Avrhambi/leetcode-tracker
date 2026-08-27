@@ -94,8 +94,18 @@ plays once.
   weakest-quality first, so the backlog clears without a 15-item wall.
 - **No eligible new problem** (all topics mastered / solved): plan shows reviews
   only, with a "You've worked through the catalog" state.
-- **Reduced motion:** all XP/level/badge animation collapses to instant state
-  changes; no parallax, no confetti.
+- **Reduced motion:** the global `prefers-reduced-motion` rule clamps every
+  animation to a single 150ms pass; the level-up pulse, the XP-track sweep, and
+  the badge-reveal fade additionally get an explicit `animation: none` override,
+  so they do not play at all. The XP fill-bar transition still runs (clamped).
+  No parallax, no confetti.
+
+As built, the gamification motion vocabulary is: a one-shot pulse + text-shadow
+on the level number and a light-sweep across the XP track when the level rises
+while the dashboard is mounted; a short translate-and-fade when a badge unlocks
+while mounted; the XP fill-bar width transition on any XP change. All CSS
+`@keyframes`, no motion library (`.hallmark/preflight.json` "motion-cut" still
+holds — nothing was installed).
 
 ### Information architecture changes
 
@@ -110,8 +120,9 @@ plays once.
   list and Problem Detail render the problem's status and difficulty as prominent
   badges; Problem Detail shows the full attempt history with the now-surfaced
   fields (help type, duration, notes) and a `struggling` badge when set.
-- New optional **Achievements** panel (within Dashboard or Settings) listing earned
-  and locked badges.
+- **Badge shelf** on the Dashboard listing all six milestone badges (earned or
+  locked). Shipped inline on the Dashboard rather than as a separate Achievements
+  panel — six badges do not warrant their own screen.
 
 ## 3. Technical needs
 
@@ -236,10 +247,16 @@ out-of-order backdating, which a stored "last advance date" is not.
 - `replayXp(attempts)` → folds the full history (sorted by `createdAt` then `id`)
   and is shared by the v3 upgrade and by backup restore of a pre-gamification
   payload; unit-tested to agree with an incremental live-award fold.
-- `badgesEarned(state, progress, attempts)` → pure check of badge predicates
-  (first mastered problem, a topic fully mastered, 7-day streak, 30-day streak,
-  100 problems attempted, a full tier mastered, …). Returns ids; caller diffs
-  against `state.badges` to fire the "new badge" animation.
+**Badges** (`src/services/badges.ts`, pure):
+- `badgesEarned({ progress, attempts, problems, currentStreakDays })` → the six
+  badge ids currently satisfied (first solve, first mastered, topic cleared,
+  ten-day streak, halfway at 75 distinct problems, century at 100). The streak
+  length is passed in, not recomputed, to keep this decoupled from `streak.ts`.
+- `mergeBadges(stored, earned)` → monotonic union ordered by the `BADGES` list;
+  drops unknown ids. `saveAttempt` calls `badgesEarned` after the progress write
+  and `recordBadges` unions the result in — so a badge, once earned, survives a
+  later weak attempt that resets its stage, and returning users pick badges up on
+  their next attempt (no replay). `BADGES` lives in `constants.ts`.
 
 ### Module / folder structure (restructure)
 

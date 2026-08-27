@@ -72,11 +72,15 @@ export interface AppSetting {
   value: string;
 }
 
-// Single-row store (key: 'state'). Only lifetime `xp` is persisted; the level is
+// Single-row store (key: 'state'). `xp` is lifetime XP; `badges` is the earned
+// milestone-id set, written as a monotonic union so it never regresses. Level is
 // derived on read (services/gamification.ts) so it cannot drift from xp.
+// `badges` is optional: a row written before the visuals slice has none and
+// reads as [].
 export interface GamificationState {
   key: 'state';
-  xp: number;        // total lifetime XP
+  xp: number;         // total lifetime XP
+  badges?: string[];  // earned badge ids (see services/constants.ts BADGES)
   updatedAt: string;
 }
 
@@ -88,8 +92,8 @@ export interface BackupPayload {
   recommendationEvents: RecommendationEvent[];
   settings: AppSetting[];
   gamification?: GamificationState;  // optional within v2 — a coach-fixes-era
-                                     // backup has none; rebuilt from `attempts`
-                                     // on restore when absent
+                                     // backup has none; XP rebuilt from `attempts`
+                                     // on restore when absent, badges start empty
 }
 
 export const dexieStores = {
@@ -128,3 +132,13 @@ reconstruct it.
 `replayXp(attempts)` folds the whole history (sorted by `createdAt` then `id` for
 a deterministic result) and is shared by the v3 upgrade and by backup restore
 when the payload carries no gamification row.
+
+### Badges
+
+`badgesEarned(progress, attempts, problems, currentStreakDays)` (services/badges.ts)
+returns the badge ids currently satisfied. `saveAttempt` calls it after the
+progress write, with the streak length computed from the same transaction's
+attempts + settings, and `recordBadges` unions the result into the stored set —
+so a badge is monotonic and needs no replay (returning users pick badges up on
+their next attempt). No Dexie version bump: `gamification: '&key'` has no index
+on `badges`.
