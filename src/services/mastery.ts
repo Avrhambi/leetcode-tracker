@@ -1,4 +1,5 @@
 import type { Attempt, CatalogProblem, ProblemProgress, Quality } from '../types/models';
+import { topicMastery } from './dailyPlan';
 
 // "Is the practice actually helping?" signals, derived entirely from the recorded
 // attempts and progress — no extra stored state.
@@ -29,6 +30,35 @@ export function topicTrajectory(
   if (delta > 0.3) return 'improving';
   if (delta < -0.3) return 'declining';
   return 'flat';
+}
+
+export interface TopicMasteryCell {
+  topic: string;
+  mastery: number;   // [0, 1] mean review-stage progress, struggling counted honestly
+  total: number;     // problems in the topic
+  attempted: number;
+  mastered: number;
+}
+
+// Per-topic mastery for the constellation visual — the display view (forPriority
+// false, so a struggling problem counts as its real low stage, not the 0.5 the
+// queue uses to relieve pressure). Ordered by the catalog's topic order.
+export function masteryByTopic(problems: CatalogProblem[], progress: ProblemProgress[]): TopicMasteryCell[] {
+  const progressByProblem = new Map(progress.map((row) => [row.problemId, row]));
+  const topics: string[] = [];
+  for (const problem of problems) if (!topics.includes(problem.primaryTopic)) topics.push(problem.primaryTopic);
+
+  return topics.map((topic) => {
+    const topicProblems = problems.filter((problem) => problem.primaryTopic === topic);
+    const cells = topicProblems.map((problem) => progressByProblem.get(problem.id)).filter((row): row is ProblemProgress => row !== undefined);
+    return {
+      topic,
+      mastery: topicMastery(topic, problems, progressByProblem, false),
+      total: topicProblems.length,
+      attempted: cells.length,
+      mastered: cells.filter((row) => row.status === 'mastered').length
+    };
+  });
 }
 
 export interface StrugglingProblem { problemId: string; consecutiveWeak: number; }

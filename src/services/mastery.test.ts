@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { strugglingProblems, topicTrajectory } from './mastery';
+import { masteryByTopic, strugglingProblems, topicTrajectory } from './mastery';
 import type { Attempt, CatalogProblem, ProblemProgress, Quality } from '../types/models';
 
 const problems: CatalogProblem[] = [
@@ -38,6 +38,31 @@ describe('topicTrajectory', () => {
   it('ignores attempts from other topics', () => {
     const attempts = [attempt('c', 'weak'), attempt('c', 'weak'), attempt('a', 'strong'), attempt('a', 'strong')];
     expect(topicTrajectory('Arrays', attempts, problems)).toBe('flat');
+  });
+});
+
+describe('masteryByTopic', () => {
+  it('returns one cell per topic in catalog order, with counts', () => {
+    const rows = [
+      progress({ problemId: 'a', status: 'mastered', reviewStage: 5 }),
+      progress({ problemId: 'b', status: 'solved', reviewStage: 3 })
+    ];
+    const cells = masteryByTopic(problems, rows);
+    expect(cells.map((c) => c.topic)).toEqual(['Arrays', 'Trees']);
+    const arrays = cells[0];
+    expect(arrays.total).toBe(2);
+    expect(arrays.attempted).toBe(2);
+    expect(arrays.mastered).toBe(1);
+    // (5/5 + 3/5) / 2 = 0.8
+    expect(arrays.mastery).toBeCloseTo(0.8);
+    const trees = cells[1];
+    expect(trees).toMatchObject({ total: 1, attempted: 0, mastered: 0, mastery: 0 });
+  });
+
+  it('counts a struggling problem at its real (low) stage, not the queue 0.5', () => {
+    const rows = [progress({ problemId: 'a', struggling: true, reviewStage: 0, status: 'attempted' })];
+    const arrays = masteryByTopic(problems, rows)[0];
+    expect(arrays.mastery).toBe(0); // (0/5 + 0) / 2, b untouched
   });
 });
 
