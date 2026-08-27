@@ -15,6 +15,7 @@
 ## Attempts and reviews
 - Submit each valid outcome and confirm its quality, stage, status, and next-review date.
 - Confirm help type is required only for hint/solution outcomes.
+- Change the outcome and confirm the difficulty and help-type options adapt: "solved on my own" shows all three difficulties and no help type; "solved after a hint" drops "comfortable" and requires a help type from the shallow set; "watched the solution" and "couldn't solve it" hide the difficulty field entirely and save it as a struggle.
 - Reject duration values 0, 601, decimals, and non-numbers; accept 1 and 600.
 - Reject notes over 500 trimmed characters.
 - Reach stage 5 through strong reviews and confirm mastered status with no next review.
