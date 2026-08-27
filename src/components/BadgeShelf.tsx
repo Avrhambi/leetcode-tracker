@@ -28,8 +28,14 @@ export function BadgeShelf({ earned }: BadgeShelfProps) {
     knownRef.current = new Set(earned);
     if (added.length === 0) return;
     setFresh(new Set(added));
+    // Always clear the flag after the reveal window, even if another badge lands
+    // mid-animation — otherwise the `fresh` class would stick and a later unlock
+    // could not re-fire it.
     const timer = window.setTimeout(() => setFresh(new Set()), 700);
-    return () => window.clearTimeout(timer);
+    return () => {
+      window.clearTimeout(timer);
+      setFresh(new Set());
+    };
   }, [earned]);
 
   return <section className="badge-shelf" aria-labelledby="badge-shelf-heading">

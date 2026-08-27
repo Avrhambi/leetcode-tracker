@@ -31,10 +31,12 @@ export async function awardAttemptXp(quality: Quality, isFirstOfDay: boolean, no
 
 // Union freshly-earned badges into the stored set. Monotonic — a badge is never
 // removed once earned, even if a later weak attempt resets the stage that earned
-// it. Call inside `saveAttempt`'s transaction, after the progress write.
+// it. Call inside `saveAttempt`'s transaction, after the progress write; the
+// re-read picks up the XP `awardAttemptXp` wrote earlier in the same transaction.
+// The put is unconditional and idempotent — comparing set contents to skip it
+// would just re-do mergeBadges' work.
 export async function recordBadges(earned: BadgeId[], now: Date): Promise<void> {
   const current = (await db.gamification.get('state')) ?? DEFAULT_STATE;
   const badges = mergeBadges(current.badges ?? [], earned);
-  if (badges.length === (current.badges?.length ?? 0)) return;
   await db.gamification.put({ key: 'state', xp: current.xp, badges, updatedAt: now.toISOString() });
 }

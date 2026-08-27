@@ -17,13 +17,17 @@ export function GamificationBar({ snapshot }: GamificationBarProps) {
   const [leveled, setLeveled] = useState(false);
 
   useEffect(() => {
-    if (level > previousLevel.current) {
-      setLeveled(true);
-      const timer = window.setTimeout(() => setLeveled(false), 1000);
-      previousLevel.current = level;
-      return () => window.clearTimeout(timer);
-    }
+    const rose = level > previousLevel.current;
     previousLevel.current = level;
+    if (!rose) return;
+    setLeveled(true);
+    // Clear the flag after the pulse, and also on cleanup, so a second level-up
+    // landing mid-pulse still re-fires it.
+    const timer = window.setTimeout(() => setLeveled(false), 1000);
+    return () => {
+      window.clearTimeout(timer);
+      setLeveled(false);
+    };
   }, [level]);
 
   return <article className="xp-bar" data-leveled={leveled} aria-label={`Level ${level}, ${xp} total XP`}>
