@@ -47,12 +47,15 @@
 - Solve a first problem: the "First solve" badge fills and fades in; the shelf reads 1 / 6.
 - Take a problem to mastered, then drive it to three weak attempts: the "First mastered" badge stays earned (monotonic), and that topic's node shows the dashed warning ring.
 - Solve the struggling problem strongly: the warning ring on the topic's node clears.
-- The topic map renders one node per topic (18) in three bands (Foundations / Intermediate / Advanced), larger and filled for more-mastered topics; long topic names wrap to two lines without overlap.
+- The topic map renders one node per topic (18) in three bands (Foundations / Intermediate / Advanced), larger and filled for more-mastered topics; long topic names wrap without overlap. Narrow the window to ~360 px: the band grid reflows to fewer columns and the labels stay full-size (not shrunk to fit).
 - Restore a backup with no badge data: the shelf starts empty and re-fills after the next attempt.
 
-## Topic panel and links
+## Side panel, search, and links
 - Click a topic node: its problems list beside the map in NeetCode order with difficulty and status badges; click the node again or Close to dismiss.
 - Click a problem in the panel: the panel swaps to the problem detail; Back returns to the list; the map stays visible throughout.
+- Type in the search box: after a ~200 ms pause the panel shows problems whose title or topic matches, each row also showing its primary topic, with a "N of 150" count. Clearing the box closes the panel.
+- Search a string that matches nothing: the panel shows "No matching problems."
+- Open a problem from the search results, then press Back: it returns to the search results, not a topic list. Open one from a topic node and press Back: it returns to that topic's list.
 - Open a problem's LeetCode link and confirm it opens in a separate tab.
 - Confirm no problem statement or solution text is stored or displayed.
 
@@ -66,7 +69,7 @@
 - Confirm reset does nothing until `RESET` is typed exactly.
 
 ## Responsive and production
-- At 719 px, verify the topic map, an open topic panel (stacked under the map), the Today strip, badges, forms, and the Settings overlay remain usable without horizontal page scrolling.
+- At 719 px, verify the topic map (band grid reflowed, labels full-size), an open topic panel (stacked under the map), the search box, the Today strip, badges, forms, and the Settings overlay remain usable without horizontal page scrolling.
 - At 720 px and desktop width, verify the topic panel sits beside the map.
 - Run `npm install`, then `npm run dev`; confirm startup succeeds.
 - Run the production build and serve its output; confirm direct app startup and local persistence work.
