@@ -15,10 +15,14 @@
 ## Attempts and reviews
 - Submit each valid outcome and confirm its quality, stage, status, and next-review date.
 - Confirm help type is required only for hint/solution outcomes.
+- Change the outcome and confirm the difficulty and help-type options adapt: "solved on my own" shows all three difficulties and no help type; "solved after a hint" drops "comfortable" and requires a help type from the shallow set; "watched the solution" and "couldn't solve it" hide the difficulty field entirely and save it as a struggle.
 - Reject duration values 0, 601, decimals, and non-numbers; accept 1 and 600.
 - Reject notes over 500 trimmed characters.
 - Reach stage 5 through strong reviews and confirm mastered status with no next review.
 - Record two attempts for one problem on the same day (one from the daily plan, one from the catalog): the review stage and status advance only once; both attempts show in the history. A weak second pass on a scheduled review does not send it back to the daily plan as a new problem.
+- Open a problem that is on today's plan from the catalog and record an attempt there: the Today item shows "Solved" without touching the daily-plan screen.
+- Record an attempt from the catalog for a problem skipped earlier today: the (now stale) recommendation is marked complete.
+- In the attempt history, confirm help type, time spent, and notes appear on the rows that have them, and a "Needs a different approach" badge shows once a problem is struggling.
 - Fail one problem weakly three times running: it is flagged struggling, its next review moves out past tomorrow (2, then 4, then 7 days), and its topic stops dominating the new-problem picks.
 - While a topic has struggling problems, confirm new problems it still serves stay at the Easy difficulty ceiling — failing a topic must not unlock its Medium/Hard problems.
 - Solve a struggling problem strongly: the flag clears and the next review returns to the normal ladder.

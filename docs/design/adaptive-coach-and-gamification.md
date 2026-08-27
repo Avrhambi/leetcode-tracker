@@ -20,8 +20,10 @@ This effort has five threads, in priority order:
    returns after a few days away (the streak resets to zero, punishing the gap).
 3. **Review the attempt form's data capture.** Confirm the form already extracts
    enough signal (it does — `outcome`, `perceivedDifficulty`, `helpType`, `duration`,
-   `notes`). Do **not** add fields. Only make the labels and option copy more
-   human-readable, and surface the already-captured-but-unused fields.
+   `notes`). Do **not** add fields. Make the labels and option copy more
+   human-readable, adapt the difficulty and help-type options to the chosen
+   outcome so only sensible combinations are offered (see §2), and surface the
+   already-captured-but-unused fields.
 4. **Confirm the catalog is the full NeetCode 150.** It already is (150 problems,
    all 18 topics). This thread is a verification + a stale-seed-safety note, not a
    build.
@@ -101,9 +103,13 @@ plays once.
   indicator, a topic-mastery visual (constellation / bar grid), and a
   "Needs attention" list (struggling problems).
 - **Today** items show XP value per item and a subtle completion animation.
-- **Catalog / Problem Detail**: attempt form copy is reworded; Problem Detail shows
-  the full attempt history with the now-surfaced fields (help type, duration, notes)
-  and a `struggling` flag when set.
+- **Catalog / Problem Detail**: attempt form copy is reworded and its options
+  adapt to the outcome (`solved_independently` → all difficulties, no help type;
+  `solved_with_hint` → manageable/hard + shallow help types; `watched_solution` /
+  `could_not_solve` → no difficulty field, deeper/no help types). Both the catalog
+  list and Problem Detail render the problem's status and difficulty as prominent
+  badges; Problem Detail shows the full attempt history with the now-surfaced
+  fields (help type, duration, notes) and a `struggling` badge when set.
 - New optional **Achievements** panel (within Dashboard or Settings) listing earned
   and locked badges.
 

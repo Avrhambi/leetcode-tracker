@@ -104,6 +104,8 @@ button, input, select, textarea, a { transition: background-color var(--dur-shor
 .daily-challenge-actions { gap: var(--space-xs); }
 .completed-challenge { color: var(--color-ink); background: var(--color-paper-3); border-color: var(--color-success) !important; }
 .challenge-status { color: var(--color-accent-ink); background: var(--color-success); border-radius: var(--radius-none); }
+.struggling-badge { color: var(--color-error); font-weight: 700; }
+.attempt-notes { margin: var(--space-2xs) 0 0; color: var(--color-neutral); font-size: var(--text-sm); }
 
 .filters { gap: var(--space-sm); margin-bottom: var(--space-xl); }
 .filters label, .attempt-form label, .settings label { color: var(--color-ink-2); font-size: var(--text-sm); }
@@ -114,8 +116,19 @@ button, input, select, textarea, a { transition: background-color var(--dur-shor
 .problem-link { color: var(--color-ink); }
 .problem-link h2, .problem-link h3 { font-size: var(--text-lg); }
 .problem-link:hover h2, .problem-link:hover h3 { color: var(--color-accent); }
-.difficulty { letter-spacing: 0.06em; }
-.easy { color: var(--color-success); }.medium { color: var(--color-warning); }.hard { color: var(--color-error); }
+/* Badges — status and difficulty, rendered prominently. */
+.badge { display: inline-flex; align-items: center; padding: var(--space-2xs) var(--space-sm); font-family: var(--font-display); font-size: var(--text-sm); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; line-height: 1.1; border: var(--rule-hair) solid currentColor; border-radius: var(--radius-none); white-space: nowrap; }
+.badge-difficulty.easy { color: var(--color-success); }
+.badge-difficulty.medium { color: var(--color-warning); }
+.badge-difficulty.hard { color: var(--color-error); }
+.badge-status { color: var(--color-accent-ink); border-color: transparent; }
+.badge-status.status-not_started { color: var(--color-ink-2); background: var(--color-paper-3); }
+.badge-status.status-attempted { background: var(--color-warning); }
+.badge-status.status-solved { background: var(--color-success); }
+.badge-status.status-mastered { background: var(--color-accent); }
+.badge-struggling { color: var(--color-accent-ink); background: var(--color-error); border-color: transparent; }
+.badge-row { display: flex; flex-wrap: wrap; gap: var(--space-xs); margin-block: var(--space-md) var(--space-lg); }
+.problem-detail .badge { font-size: var(--text-lg); padding: var(--space-xs) var(--space-md); }
 
 .problem-detail { max-width: 52rem; }
 .problem-detail > button, button[type="submit"], .settings article button, .daily-plan button { min-height: 2.75rem; padding: var(--space-xs) var(--space-md); color: var(--color-accent-ink); background: var(--color-accent); border: var(--rule-hair) solid var(--color-accent); border-radius: var(--radius-none); cursor: pointer; white-space: nowrap; }

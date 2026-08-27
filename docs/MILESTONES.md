@@ -41,7 +41,8 @@ Read: `AGENTS.md`, `SPEC.md`, `SCHEMA.md`, `design/adaptive-coach-and-gamificati
 - [x] Flag `struggling` problems, back off their reviews, and stop them pulling their topic's new-problem priority.
 - [x] Add pure `mastery` (topic trajectory, struggling list) and `streak` (grace days) services.
 - [x] Dexie `version(2)` migration (progress backfill) + backup `formatVersion: 2` with v1 back-compat.
-- [ ] Wire the catalog attempt form to complete a matching daily recommendation; reword the form copy; surface the unused attempt fields.
+- [x] Wire the catalog attempt form to complete a matching daily recommendation; reword the form copy and adapt its options to the outcome; surface the unused attempt fields.
+- [x] Render problem status and difficulty as prominent badges in the catalog and problem detail.
 - [ ] Wire the grace-day streak into the dashboard.
 - [ ] Run `npm run verify`.
 

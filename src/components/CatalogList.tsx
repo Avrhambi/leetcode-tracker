@@ -21,6 +21,6 @@ export function CatalogList({ problems, progressByProblem, onSelect }: CatalogLi
     {filtered.map((problem) => <li key={problem.id} className="catalog-row">
       <span className="order">{problem.neetcodeOrder}</span>
       <div><button className="problem-link" type="button" onClick={() => onSelect(problem)}><h3>{problem.title}</h3></button><p>{problem.primaryTopic} · {problem.topics.join(', ')}</p></div>
-      <div className="problem-meta"><span className={`difficulty ${problem.difficulty}`}>{problem.difficulty}</span><span>{(progressByProblem.get(problem.id) ?? 'not_started').replaceAll('_', ' ')}</span></div>
+      <div className="problem-meta"><span className={`badge badge-difficulty ${problem.difficulty}`}>{problem.difficulty}</span><span className={`badge badge-status status-${progressByProblem.get(problem.id) ?? 'not_started'}`}>{(progressByProblem.get(problem.id) ?? 'not_started').replaceAll('_', ' ')}</span></div>
     </li>)}</ol>}</section>;
 }
