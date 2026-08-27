@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { STREAK_GRACE_PER_WEEK } from '../services/constants';
 import { currentStreak, type StreakGraceState } from '../services/streak';
 import { masteryByTopic } from '../services/mastery';
@@ -7,7 +7,7 @@ import type { GamificationView } from '../hooks/useGamification';
 import { GamificationBar } from './GamificationBar';
 import { BadgeShelf } from './BadgeShelf';
 import { TopicMap } from './TopicMap';
-import { TopicPanel } from './TopicPanel';
+import { SidePanel, type Panel } from './SidePanel';
 import { DailyPlan } from './DailyPlan';
 import type { AppSetting, Attempt, CatalogProblem, ProblemProgress, ProgressStatus } from '../types/models';
 
@@ -42,10 +42,29 @@ function graceStateFrom(settings: AppSetting[]): StreakGraceState {
   };
 }
 
-// The single screen: XP strip, tiered topic map (with the bare-minimum stats in
-// its header and a per-topic side panel), today's plan, badge shelf.
+// The single screen: XP strip, a search box, the tiered topic map (with the
+// bare-minimum stats above it and a side panel for a topic's problems, the
+// search results, or one problem's detail), today's plan, badge shelf.
 export function Workbench({ attempts, problems, progress, progressByProblem, settings, gamification, planItems, completedProblemIds, onSkip }: WorkbenchProps) {
-  const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
+  const [panel, setPanel] = useState<Panel | null>(null);
+  const [searchInput, setSearchInput] = useState('');
+  const [search, setSearch] = useState('');
+
+  // 200 ms debounce (CLAUDE.md convention for search).
+  useEffect(() => {
+    const timeout = window.setTimeout(() => setSearch(searchInput.trim()), 200);
+    return () => window.clearTimeout(timeout);
+  }, [searchInput]);
+
+  // A non-empty query drives the panel into search mode; clearing it closes the
+  // search panel but leaves a topic or problem panel alone.
+  useEffect(() => {
+    if (search !== '') {
+      setPanel({ kind: 'search', query: search });
+    } else {
+      setPanel((current) => (current?.kind === 'search' ? null : current));
+    }
+  }, [search]);
 
   const today = localDate();
   const sevenDaysAgo = new Date();
@@ -65,7 +84,20 @@ export function Workbench({ attempts, problems, progress, progressByProblem, set
       .filter((topic): topic is string => topic !== undefined)
   );
 
-  const toggleTopic = (topic: string) => setSelectedTopic((current) => (current === topic ? null : topic));
+  // The map's selected node: lit for an open topic panel, and still lit while a
+  // problem opened from that topic panel is showing.
+  const selectedTopic =
+    panel?.kind === 'topic' ? panel.topic
+      : panel?.kind === 'problem' && panel.back.kind === 'topic' ? panel.back.topic
+      : null;
+
+  const toggleTopic = (topic: string) =>
+    setPanel((current) => (current?.kind === 'topic' && current.topic === topic ? null : { kind: 'topic', topic }));
+
+  const closePanel = () => {
+    setPanel(null);
+    setSearchInput('');
+  };
 
   return <section className="workbench" aria-label="Practice workbench">
     {gamification && <GamificationBar snapshot={gamification} />}
@@ -76,18 +108,29 @@ export function Workbench({ attempts, problems, progress, progressByProblem, set
       <span><b>{dueReviews}</b> due reviews</span>
     </div>
 
-    <div className={`workbench-map${selectedTopic ? ' has-panel' : ''}`}>
+    <input
+      type="search"
+      className="workbench-search"
+      value={searchInput}
+      onChange={(event) => setSearchInput(event.target.value)}
+      placeholder="Search problems"
+      aria-label="Search problems"
+    />
+
+    <div className={`workbench-map${panel ? ' has-panel' : ''}`}>
       <TopicMap
         cells={masteryByTopic(problems, progress)}
         strugglingTopics={strugglingTopics}
         selectedTopic={selectedTopic}
         onSelectTopic={toggleTopic}
       />
-      {selectedTopic && <TopicPanel
-        topic={selectedTopic}
+      {panel && <SidePanel
+        panel={panel}
         problems={problems}
         progressByProblem={progressByProblem}
-        onClose={() => setSelectedTopic(null)}
+        onSelectProblem={(problem, back) => setPanel({ kind: 'problem', problem, back })}
+        onBack={(target) => setPanel(target)}
+        onClose={closePanel}
       />}
     </div>
 

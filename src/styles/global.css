@@ -37,6 +37,8 @@ button, input, select, textarea, a { transition: background-color var(--dur-shor
 .workbench { display: grid; gap: var(--space-lg); }
 .workbench-stats { display: flex; flex-wrap: wrap; gap: var(--space-lg); padding: var(--space-sm) 0; color: var(--color-neutral); font-size: var(--text-sm); border-block: var(--rule-hair) solid var(--color-rule); }
 .workbench-stats b { color: var(--color-accent); font-family: var(--font-display); font-size: var(--text-lg); }
+.workbench-search { width: 100%; padding: var(--space-sm) var(--space-md); color: var(--color-ink); background: var(--color-paper-2); border: var(--rule-hair) solid var(--color-rule); border-radius: var(--radius-none); font: inherit; }
+.workbench-search:focus-visible { outline: var(--rule-hair) solid var(--color-accent); border-color: var(--color-accent); }
 .workbench-map { display: grid; gap: var(--space-lg); }
 .workbench-map.has-panel { grid-template-columns: minmax(0, 1fr) minmax(0, 26rem); align-items: start; }
 
@@ -92,9 +94,7 @@ button, input, select, textarea, a { transition: background-color var(--dur-shor
 .struggling-badge { color: var(--color-error); font-weight: 700; }
 .attempt-notes { margin: var(--space-2xs) 0 0; color: var(--color-neutral); font-size: var(--text-sm); }
 
-/* ---- Filters (catalog-style, reused in panel if needed) ---- */
-.filters { display: grid; grid-template-columns: 2fr repeat(3, 1fr); gap: var(--space-sm); margin-bottom: var(--space-xl); }
-.filters label, .attempt-form label, .settings label { display: grid; gap: var(--space-2xs); color: var(--color-ink-2); font-size: var(--text-sm); font-weight: 600; }
+.attempt-form label, .settings label { display: grid; gap: var(--space-2xs); color: var(--color-ink-2); font-size: var(--text-sm); font-weight: 600; }
 .empty-state { padding: var(--space-xl); text-align: center; }
 
 /* ---- Catalog / problem rows ---- */
@@ -170,7 +170,6 @@ input:invalid, select:invalid, textarea:invalid { border-color: var(--color-erro
   .app-header { margin-bottom: var(--space-lg); }
   .section-heading, .daily-challenge-header { align-items: start; flex-direction: column; }
   .workbench-stats { gap: var(--space-md); }
-  .filters { grid-template-columns: 1fr; }
   .catalog-row { grid-template-columns: 2.25rem minmax(0, 1fr); padding: var(--space-md); }
   .problem-meta { grid-column: 2; justify-items: start; grid-auto-flow: column; justify-content: start; gap: var(--space-sm); }
   .daily-challenge-actions { justify-content: start; }
