@@ -37,7 +37,7 @@ button, input, select, textarea, a { transition: background-color var(--dur-shor
 .workbench { display: grid; gap: var(--space-lg); }
 .workbench-stats { display: flex; flex-wrap: wrap; gap: var(--space-lg); padding: var(--space-sm) 0; color: var(--color-neutral); font-size: var(--text-sm); border-block: var(--rule-hair) solid var(--color-rule); }
 .workbench-stats b { color: var(--color-accent); font-family: var(--font-display); font-size: var(--text-lg); }
-.workbench-search { width: 100%; padding: var(--space-sm) var(--space-md); color: var(--color-ink); background: var(--color-paper-2); border: var(--rule-hair) solid var(--color-rule); border-radius: var(--radius-none); font: inherit; }
+.workbench-search { width: 100%; padding: var(--space-xs) var(--space-md); color: var(--color-ink); background: var(--color-paper-2); border: var(--rule-hair) solid var(--color-rule); border-radius: var(--radius-none); font: inherit; font-size: var(--text-sm); }
 .workbench-search:focus-visible { outline: var(--rule-hair) solid var(--color-accent); border-color: var(--color-accent); }
 .workbench-map { display: grid; gap: var(--space-lg); }
 .workbench-map.has-panel { grid-template-columns: minmax(0, 1fr) minmax(0, 26rem); align-items: start; }

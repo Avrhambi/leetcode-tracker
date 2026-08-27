@@ -91,8 +91,12 @@ export function Workbench({ attempts, problems, progress, progressByProblem, set
       : panel?.kind === 'problem' && panel.back.kind === 'topic' ? panel.back.topic
       : null;
 
-  const toggleTopic = (topic: string) =>
+  const toggleTopic = (topic: string) => {
+    // Clear any search so its pending debounce is cancelled and the box does not
+    // sit populated over a topic panel.
+    setSearchInput('');
     setPanel((current) => (current?.kind === 'topic' && current.topic === topic ? null : { kind: 'topic', topic }));
+  };
 
   const closePanel = () => {
     setPanel(null);
