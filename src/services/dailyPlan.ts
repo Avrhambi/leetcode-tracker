@@ -108,10 +108,23 @@ function fillNewProblems(plan: DailyPlanItem[], target: number, problems: Catalo
 }
 
 // Mean mastery of a topic in [0, 1]: reviewStage/5 per problem, 0 for untouched.
-function topicMastery(topic: string, problems: CatalogProblem[], progressByProblem: Map<string, ProblemProgress>): number {
+//
+// `struggling` problems get different treatment per call site (`forPriority`):
+//   - priority (new-problem topic pick): a struggling problem contributes a
+//     neutral 0.5 rather than its reset-to-0 stage, so a topic the user is stuck
+//     on stops being pinned at maximum priority and flooding them with more
+//     problems from it.
+//   - difficulty ceiling: a struggling problem contributes its real (0) stage,
+//     so the ceiling stays low — a topic the user is failing must not unlock
+//     Medium/Hard just because its struggling problems were lifted to 0.5.
+function topicMastery(topic: string, problems: CatalogProblem[], progressByProblem: Map<string, ProblemProgress>, forPriority: boolean): number {
   const topicProblems = problems.filter((problem) => problem.primaryTopic === topic);
   if (topicProblems.length === 0) return 1;
-  const total = topicProblems.reduce((sum, problem) => sum + (progressByProblem.get(problem.id)?.reviewStage ?? 0) / MAX_REVIEW_STAGE, 0);
+  const total = topicProblems.reduce((sum, problem) => {
+    const progress = progressByProblem.get(problem.id);
+    if (forPriority && progress?.struggling) return sum + 0.5;
+    return sum + (progress?.reviewStage ?? 0) / MAX_REVIEW_STAGE;
+  }, 0);
   return total / topicProblems.length;
 }
 
@@ -146,7 +159,7 @@ function selectNewProblem(problems: CatalogProblem[], progressByProblem: Map<str
 
   const chosenTopic = eligibleTopics
     .map((topic) => {
-      const mastery = topicMastery(topic, problems, progressByProblem);
+      const mastery = topicMastery(topic, problems, progressByProblem, true);
       const recencyPenalty = recentTopics.has(topic) || selectedTopics.has(topic) ? 0.35 : 1;
       const priority = tierWeight(topic) * (1 - mastery) * recencyPenalty + jitter(today + topic);
       return { topic, priority };
@@ -154,8 +167,8 @@ function selectNewProblem(problems: CatalogProblem[], progressByProblem: Map<str
     .sort((left, right) => right.priority - left.priority)[0]?.topic;
   if (!chosenTopic) return undefined;
 
-  const mastery = topicMastery(chosenTopic, problems, progressByProblem);
-  const maxDifficulty = maxDifficultyFor(mastery);
+  const ceilingMastery = topicMastery(chosenTopic, problems, progressByProblem, false);
+  const maxDifficulty = maxDifficultyFor(ceilingMastery);
   const topicProblems = candidates
     .filter((problem) => problem.primaryTopic === chosenTopic)
     .sort((left, right) => DIFFICULTY_ORDER.indexOf(left.difficulty) - DIFFICULTY_ORDER.indexOf(right.difficulty) || left.neetcodeOrder - right.neetcodeOrder);

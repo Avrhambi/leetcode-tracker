@@ -34,6 +34,8 @@ export interface ProblemProgress {
   lastAttemptDate: string | null;
   lastQuality: Quality | null;
   strongAttemptCount: number;
+  consecutiveWeak: number;   // back-to-back weak attempts; resets on any non-weak
+  struggling: boolean;       // set at consecutiveWeak >= 3; cleared by a strong attempt
   updatedAt: string;
 }
 
@@ -56,17 +58,24 @@ export interface RecommendationEvent {
   kind: 'new' | 'review';
   recommendedAt: string;
   skippedUntil: string | null;
+  completedAt?: string | null;
 }
 
+export type AppSettingKey =
+  | 'catalogVersion'
+  | 'streakGraceRemaining'      // integer, streak grace days left
+  | 'streakGraceRefreshedOn'    // YYYY-MM-DD of the last grace top-up
+  | 'lastActiveOn';             // YYYY-MM-DD of the last recorded attempt
+
 export interface AppSetting {
-  key: 'catalogVersion';
+  key: AppSettingKey;
   value: string;
 }
 
 export interface BackupPayload {
-  formatVersion: 1;
-  exportedAt: string;
-  progress: ProblemProgress[];
+  formatVersion: 1 | 2;   // v2 adds ProblemProgress.consecutiveWeak / .struggling
+  exportedAt: string;     // and the streak settings keys; a v1 file restores with
+  progress: ProblemProgress[];       // those defaulted (0 / false)
   attempts: Attempt[];
   recommendationEvents: RecommendationEvent[];
   settings: AppSetting[];
@@ -79,4 +88,8 @@ export const dexieStores = {
   recommendationEvents: '&id, problemId, kind, recommendedAt, skippedUntil',
   settings: '&key'
 } as const;
+// Dexie versions: v1 initial; v2 backfills consecutiveWeak/struggling on progress
+// (no index change). The streak settings rows are written lazily on first update
+// and default when absent, so reset / v1-restore need no reseed. v3 (later PR)
+// adds a gamification store.
 ```

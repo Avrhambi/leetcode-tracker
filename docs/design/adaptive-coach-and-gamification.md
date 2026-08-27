@@ -83,8 +83,11 @@ plays once.
   surfaces a "Needs a different approach" nudge for that problem (link to
   NeetCode walkthrough).
 - **User returns after 3 days away.** Streak is not reset to 0 on the first gap.
-  A configurable number of **grace days** (default 2 rolling per streak, or 1 per
-  7 active days — see §3) absorb short gaps; a longer gap resets it. Due reviews
+  A **grace day** allowance (1 per 7 active days, capped at 1 — see §3) absorbs a
+  single missed day; two or more consecutive misses with no grace left reset it.
+  Grace usage is re-derived from the active-date history on every read, so the
+  streak calculation is idempotent — the persisted state is the allowance, never
+  a spent-down balance. Due reviews
   that piled up are drained via the existing review-slot scaling (up to 3/day),
   weakest-quality first, so the backlog clears without a 15-item wall.
 - **No eligible new problem** (all topics mastered / solved): plan shows reviews
@@ -120,9 +123,11 @@ already exist for this `problemId` + `attemptedOn`? `saveAttempt` reads that ins
 its existing transaction before writing. This survives out-of-order backdating,
 which a stored "last advance date" would not.
 
-**New `settings` rows** for streak-cadence state (review-cadence, not gamification —
+**New `settings` keys** for streak-cadence state (review-cadence, not gamification —
 so the streak can be wired without the gamification store): `streakGraceRemaining`,
-`streakGraceRefreshedOn`, `lastActiveOn`.
+`streakGraceRefreshedOn`, `lastActiveOn`. Written lazily on first update; the
+reader defaults when they are absent, so nothing has to seed them and a reset /
+v1 restore does not break the streak.
 
 **New store `gamification`** (single row, `key: 'state'`, added in Dexie
 `version(3)` — see below):
@@ -142,8 +147,10 @@ interface GamificationState {
 
 **Dexie migrations:**
 - `db.version(2)...upgrade()` — backfills `consecutiveWeak: 0`, `struggling: false`
-  on existing `progress` rows; seeds the streak `settings` rows. Ships in the
-  coach-fixes PR.
+  on existing `progress` rows. The streak `settings` rows are **not** seeded here —
+  they are written lazily on first update and the reader defaults when they are
+  absent, so a reset or a v1 restore (neither re-runs this upgrade) still works.
+  Ships in the coach-fixes PR.
 - `db.version(3).stores({ gamification: '&key', ... }).upgrade()` — creates the
   `gamification` store and replays lifetime XP from historical `attempts`. **Must
   be a separate version:** Dexie will not re-run a `version(2)` upgrade for a user
@@ -167,15 +174,20 @@ out-of-order backdating, which a stored "last advance date" is not.
 
 **De-escalation of a struggling problem** (`reviews.ts` + `dailyPlan.ts`):
 - `consecutiveWeak` increments on each weak attempt, resets to 0 otherwise.
-- At `consecutiveWeak >= 3`: `struggling = true`; `nextReviewDate` uses a backoff
-  ladder `[2, 4, 7]` days indexed by `min(consecutiveWeak - 3, 2)` instead of the
-  flat "tomorrow".
-- `topicMastery` in `dailyPlan.ts`: exclude `struggling` problems from the "this
-  topic still needs fresh problems" pressure — either drop them from the mean or
-  count them as a neutral 0.5 — so the engine stops flooding the user with new
-  problems from a topic they're stuck in. (Decide via simulation test which
-  reads better; documented in the plan.)
-- A strong attempt clears `struggling` and resets `consecutiveWeak`.
+- The review backoff keys on the **current** `consecutiveWeak`, not the sticky
+  `struggling` flag: a weak attempt with `consecutiveWeak >= 3` schedules the next
+  review on the `[2, 4, 7]`-day ladder (indexed by `min(consecutiveWeak - 3, 2)`)
+  instead of the flat "tomorrow". A non-weak attempt resets `consecutiveWeak`, so
+  the next weak attempt after a partial goes back to "tomorrow" and has to climb
+  the run again — the flag stays set but does not by itself keep the review
+  backed off.
+- `struggling` is set once `consecutiveWeak >= 3` and only cleared by a strong
+  attempt; a partial stops the run without clearing it.
+- `topicMastery` in `dailyPlan.ts` takes a `forPriority` flag. For the
+  new-problem **topic pick**, a `struggling` problem counts as a neutral 0.5 so
+  the engine stops flooding the user with new problems from a topic they're stuck
+  in. For the **difficulty ceiling** it counts as its real (reset-to-0) stage, so
+  a topic the user is failing does not unlock Medium/Hard.
 
 **Mastery / "is it helping" signal** (new pure module
 `src/services/mastery.ts`, all derived from `attempts` + `progress`, no new storage):
@@ -188,12 +200,18 @@ out-of-order backdating, which a stored "last advance date" is not.
 **Streak with grace days** (`src/services/streak.ts`, extracted + extended from
 `Dashboard.tsx`'s inline `currentStreak`):
 - Walk back from today over the set of active dates (dates with ≥1 attempt).
-- On the first missing date, consume one `streakGraceRemaining` and continue;
-  when grace is exhausted, stop.
-- `streakGraceRemaining` refreshes to `STREAK_GRACE_PER_WEEK` (default 1) once per
-  rolling 7 active days, tracked by `streakGraceRefreshedOn`.
-- Pure function takes `(activeDates, graceState, today)`; the Dexie read/write of
-  `graceState` lives in `db/`.
+- On a missing date, spend one grace day (if any remain and the streak has
+  started) and continue; when grace is exhausted, stop.
+- The grace allowance refreshes to `STREAK_GRACE_PER_WEEK` (default 1, and
+  capped there) once per rolling 7 active days, tracked by `streakGraceRefreshedOn`.
+- Pure function takes `(activeDates, graceState, today)` and returns
+  `{ streak, graceDaysUsed, graceState }`. **`graceState` in the result is the
+  refreshed allowance, not a spent-down balance** — grace consumption is
+  re-derived from `activeDates` every call, so the function is idempotent and the
+  Dashboard can persist `graceState` on every render without corrupting the
+  streak. `graceDaysUsed` is for display only. The Dexie read/write of
+  `graceState` lives in `db/`; when the `settings` rows are absent the reader
+  defaults to `{ graceRemaining: STREAK_GRACE_PER_WEEK, graceRefreshedOn: '' }`.
 
 **XP + levels** (`src/services/gamification.ts`, pure):
 - `xpForAttempt(quality, kind, isFirstOfDay)` → e.g. strong 20 / partial 12 /
@@ -262,7 +280,8 @@ are tunable and visible.
   a persistent blind-spot topic" still gets breadth elsewhere. Re-assert the
   existing 6 simulation invariants still hold.
 - **`streak.test.ts`** (new): grace day absorbs a 1-day gap; two gaps with grace 1
-  resets; grace refresh after 7 active days; returning-after-3-days scenario.
+  resets; grace refresh after 7 active days; returning-after-3-days scenario;
+  feeding the returned `graceState` back in is idempotent (no double-spend).
 - **`gamification.test.ts`** (new): XP per outcome/kind/first-of-day; level curve
   monotonic and hits expected breakpoints; each badge predicate fires exactly at
   its condition and not before; `badgesEarned` is idempotent.
@@ -271,8 +290,9 @@ are tunable and visible.
 - **`backup.test.ts`** (extend): v1 file restores with defaults; v2 round-trips;
   export is always v2; migration backfill matches restore backfill.
 - **Migration tests**: seed a fake v1 DB → open at v2 → assert `progress` fields
-  backfilled and streak `settings` rows seeded. Separately: v2 DB → open at v3 →
-  assert `gamification` store created with XP replayed from `attempts`.
+  backfilled (streak `settings` rows are not seeded — the reader defaults).
+  Separately: v2 DB → open at v3 → assert `gamification` store created with XP
+  replayed from `attempts`.
 
 ### Side effects on existing behavior
 
@@ -306,12 +326,13 @@ live in the implementation plan at
   No behaviour change.
 - **PR 2** — recommendation & mastery fixes + schema: `ProblemProgress` gains
   `consecutiveWeak` / `struggling`; Dexie `version(2)` + `BackupPayload`
-  `formatVersion: 2`; once-per-day stage guard (derived from the `attempts` table,
-  no new column); struggling-problem de-escalation ladder; `topicMastery` stops
-  counting struggling problems as topic pressure; new pure `mastery.ts`,
-  `streak.ts`, `constants.ts`. **Risk:** the `topicMastery` change may regress the
-  6 tuned simulation invariants — fallback is to exclude struggling problems only
-  from the difficulty-ceiling calc, documented in the PR.
+  `formatVersion: 2`; once-per-day stage/status guard (derived from the `attempts`
+  table, no new column); struggling-problem de-escalation ladder; `topicMastery`
+  takes a `forPriority` flag so struggling problems relieve new-problem topic
+  pressure (count as 0.5) without lifting the difficulty ceiling (count as their
+  real 0); new pure `mastery.ts`, `streak.ts`, `constants.ts`. All 6 tuned
+  simulation invariants stay green, plus a new blind-spot scenario that also
+  asserts the ceiling does not rise.
 - **PR 3** — catalog-entry review completion (saving an attempt from Problem Detail
   also completes a matching open daily item) + attempt-form copy rewording (labels
   only, enum values unchanged) + surfacing `helpType` / `durationMinutes` / `notes`

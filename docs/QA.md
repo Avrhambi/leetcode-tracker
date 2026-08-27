@@ -18,6 +18,15 @@
 - Reject duration values 0, 601, decimals, and non-numbers; accept 1 and 600.
 - Reject notes over 500 trimmed characters.
 - Reach stage 5 through strong reviews and confirm mastered status with no next review.
+- Record two attempts for one problem on the same day (one from the daily plan, one from the catalog): the review stage and status advance only once; both attempts show in the history. A weak second pass on a scheduled review does not send it back to the daily plan as a new problem.
+- Fail one problem weakly three times running: it is flagged struggling, its next review moves out past tomorrow (2, then 4, then 7 days), and its topic stops dominating the new-problem picks.
+- While a topic has struggling problems, confirm new problems it still serves stay at the Easy difficulty ceiling — failing a topic must not unlock its Medium/Hard problems.
+- Solve a struggling problem strongly: the flag clears and the next review returns to the normal ladder.
+
+## Streak grace
+- Miss one day after a run, then record an attempt: the streak survives (one grace day spent).
+- Miss two consecutive days with no grace left: the streak resets to the new run.
+- After seven active days, confirm a grace day is available again.
 
 ## Problems and links
 - Search waits briefly, then matches titles and slugs case-insensitively.
@@ -27,7 +36,8 @@
 
 ## Backup, restore, and failures
 - Export data, reset, restore the export, and confirm all user data returns.
-- Reject a file over 5 MB, malformed JSON, wrong format version, and invalid fields without changing existing data.
+- Restore a pre-v2 backup file: it succeeds, and every problem's `consecutiveWeak` / `struggling` default to 0 / false.
+- Reject a file over 5 MB, malformed JSON, an unsupported format version, and invalid fields without changing existing data.
 - Simulate blocked IndexedDB and confirm an inline error with a working explicit Retry action.
 - Confirm reset does nothing until `RESET` is typed exactly.
 
