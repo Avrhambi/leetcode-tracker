@@ -5,11 +5,10 @@ import { AttemptForm } from './AttemptForm';
 interface DailyPlanProps {
   items: DailyPlanItem[];
   completedProblemIds: Set<string>;
-  onComplete: (item: DailyPlanItem) => Promise<void>;
   onSkip: (item: DailyPlanItem) => Promise<void>;
 }
 
-export function DailyPlan({ items, completedProblemIds, onComplete, onSkip }: DailyPlanProps) {
+export function DailyPlan({ items, completedProblemIds, onSkip }: DailyPlanProps) {
   const [error, setError] = useState(false);
   const [expandedProblemIds, setExpandedProblemIds] = useState<Set<string>>(new Set());
   useEffect(() => setError(false), [items]);
@@ -26,10 +25,10 @@ export function DailyPlan({ items, completedProblemIds, onComplete, onSkip }: Da
     }
     return next;
   });
-  const complete = (item: DailyPlanItem) => {
-    void onComplete(item).catch(() => setError(true));
-    toggleFeedback(item.problem.id);
-  };
+  // The attempt save (in `saveAttempt`) is what completes the recommendation and,
+  // via the live query, lights up the "Solved" badge. Here we only collapse the
+  // feedback form once the attempt is in.
+  const complete = (item: DailyPlanItem) => toggleFeedback(item.problem.id);
   return <section className="daily-plan"><p className="eyebrow">Today</p><h2>Daily challenge</h2><p>Complete a challenge on LeetCode, then track how it went when you are ready.</p>{error && <p role="alert">The recommendation could not be updated. Retry.</p>}{items.length === 0 ? <p>No problems are available for today.</p> : <ol>{items.map((item) => {
     const feedbackId = `feedback-${item.problem.id}`;
     const feedbackExpanded = expandedProblemIds.has(item.problem.id);

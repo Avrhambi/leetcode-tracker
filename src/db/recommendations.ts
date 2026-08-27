@@ -17,9 +17,3 @@ export async function skipRecommendation(problemId: string, kind: DailyPlanItem[
   await db.recommendationEvents.add({ id: crypto.randomUUID(), problemId, kind, recommendedAt: now.toISOString(), skippedUntil, completedAt: null });
 }
 
-export async function completeRecommendation(problemId: string, kind: DailyPlanItem['kind'], now = new Date()): Promise<void> {
-  const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const events = await db.recommendationEvents.where('problemId').equals(problemId).toArray();
-  const event = events.find((item) => item.kind === kind && item.skippedUntil === null && new Date(item.recommendedAt) >= dayStart);
-  if (event) await db.recommendationEvents.update(event.id, { completedAt: now.toISOString() });
-}
