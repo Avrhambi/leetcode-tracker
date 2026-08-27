@@ -24,6 +24,18 @@ export const TOPIC_TIERS: Record<string, TopicTier> = {
   'Bit Manipulation': 3
 };
 
+// Human labels for the three curriculum bands, used by the topic map.
+export const TIER_LABELS: Record<TopicTier, string> = {
+  1: 'Foundations',
+  2: 'Intermediate',
+  3: 'Advanced'
+};
+
+// Tier for a topic, defaulting to 2 for anything not in the map.
+export function topicTier(topic: string): TopicTier {
+  return TOPIC_TIERS[topic] ?? 2;
+}
+
 const TIER_WEIGHT: Record<TopicTier, number> = { 1: 1, 2: 0.6, 3: 0.35 };
 
 // Topics not in the map fall back to tier 2 weighting.
