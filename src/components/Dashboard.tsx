@@ -1,5 +1,7 @@
 import { STREAK_GRACE_PER_WEEK } from '../services/constants';
 import { currentStreak, type StreakGraceState } from '../services/streak';
+import type { GamificationSnapshot } from '../services/gamification';
+import { GamificationBar } from './GamificationBar';
 import type { AppSetting, Attempt, CatalogProblem, ProblemProgress } from '../types/models';
 
 interface DashboardProps {
@@ -7,6 +9,7 @@ interface DashboardProps {
   problems: CatalogProblem[];
   progress: ProblemProgress[];
   settings: AppSetting[];
+  gamification: GamificationSnapshot | undefined;
 }
 
 function localDate(date = new Date()): string {
@@ -30,7 +33,7 @@ function graceStateFrom(settings: AppSetting[]): StreakGraceState {
   };
 }
 
-export function Dashboard({ attempts, problems, progress, settings }: DashboardProps) {
+export function Dashboard({ attempts, problems, progress, settings, gamification }: DashboardProps) {
   const today = localDate();
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
@@ -44,6 +47,7 @@ export function Dashboard({ attempts, problems, progress, settings }: DashboardP
 
   return <section className="dashboard" aria-labelledby="dashboard-heading">
     <div className="section-heading"><div><p className="eyebrow">Overview</p><h2 id="dashboard-heading">Dashboard</h2></div></div>
+    {gamification && <GamificationBar snapshot={gamification} />}
     <div className="metric-grid">
       <article><strong>{streak}</strong><span>Current streak{graceDaysUsed > 0 && <> · <span className="grace-note">{graceDaysUsed} grace {graceDaysUsed === 1 ? 'day' : 'days'} used</span></>}</span></article>
       <article><strong>{attempts.filter((attempt) => attempt.attemptedOn >= weekStart && attempt.attemptedOn <= today).length}</strong><span>Attempts in 7 days</span></article>

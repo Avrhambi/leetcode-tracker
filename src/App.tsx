@@ -9,6 +9,7 @@ import { db } from './db/database';
 import { skipRecommendation } from './db/recommendations';
 import { seedCatalog } from './db/seedCatalog';
 import { useDailyPlan } from './hooks/useDailyPlan';
+import { useGamification } from './hooks/useGamification';
 import type { CatalogProblem } from './types/models';
 
 export default function App() {
@@ -21,6 +22,7 @@ export default function App() {
   const [screen, setScreen] = useState<'dashboard' | 'daily' | 'problems' | 'settings'>('dashboard');
 
   const { plan, completedProblemIds } = useDailyPlan(problems, progress);
+  const gamification = useGamification();
 
   const seed = () => {
     setSeedError(false);
@@ -33,5 +35,5 @@ export default function App() {
   if (!problems || !progress || !attempts || !settings) return <main><p>Loading catalog…</p></main>;
   if (selectedProblem) return <main><ProblemDetail problem={selectedProblem} onBack={() => setSelectedProblem(null)} /></main>;
   const progressByProblem = new Map(progress.map((item) => [item.problemId, item.status]));
-  return <main><header className="app-header"><div className="app-intro"><p className="eyebrow">LeetCode Tracker / local training system</p><h1>LeetCode<br />Tracker</h1><p className="app-lede">A focused NeetCode 150 workbench for deliberate practice, reviews, and clear next steps.</p></div><nav className="terminal-nav" aria-label="Primary navigation"><span className="terminal-prompt" aria-hidden="true">$</span><button type="button" className={screen === 'dashboard' ? 'active' : ''} onClick={() => setScreen('dashboard')}>--dashboard</button><button type="button" className={screen === 'daily' ? 'active' : ''} onClick={() => setScreen('daily')}>--today</button><button type="button" className={screen === 'problems' ? 'active' : ''} onClick={() => setScreen('problems')}>--catalog</button><button type="button" className={screen === 'settings' ? 'active' : ''} onClick={() => setScreen('settings')}>--settings</button><span className="terminal-caret" aria-hidden="true">▮</span></nav></header>{screen === 'dashboard' ? <Dashboard attempts={attempts} problems={problems} progress={progress} settings={settings} /> : screen === 'daily' ? <DailyPlan items={plan ?? []} completedProblemIds={completedProblemIds} onSkip={(item) => skipRecommendation(item.problem.id, item.kind)} /> : screen === 'problems' ? <CatalogList problems={problems} progressByProblem={progressByProblem} onSelect={setSelectedProblem} /> : <Settings />}<footer className="app-footer"><p>LeetCode Tracker is local-first. Your practice history stays in this browser.</p></footer></main>;
+  return <main><header className="app-header"><div className="app-intro"><p className="eyebrow">LeetCode Tracker / local training system</p><h1>LeetCode<br />Tracker</h1><p className="app-lede">A focused NeetCode 150 workbench for deliberate practice, reviews, and clear next steps.</p></div><nav className="terminal-nav" aria-label="Primary navigation"><span className="terminal-prompt" aria-hidden="true">$</span><button type="button" className={screen === 'dashboard' ? 'active' : ''} onClick={() => setScreen('dashboard')}>--dashboard</button><button type="button" className={screen === 'daily' ? 'active' : ''} onClick={() => setScreen('daily')}>--today</button><button type="button" className={screen === 'problems' ? 'active' : ''} onClick={() => setScreen('problems')}>--catalog</button><button type="button" className={screen === 'settings' ? 'active' : ''} onClick={() => setScreen('settings')}>--settings</button><span className="terminal-caret" aria-hidden="true">▮</span></nav></header>{screen === 'dashboard' ? <Dashboard attempts={attempts} problems={problems} progress={progress} settings={settings} gamification={gamification} /> : screen === 'daily' ? <DailyPlan items={plan ?? []} completedProblemIds={completedProblemIds} onSkip={(item) => skipRecommendation(item.problem.id, item.kind)} /> : screen === 'problems' ? <CatalogList problems={problems} progressByProblem={progressByProblem} onSelect={setSelectedProblem} /> : <Settings />}<footer className="app-footer"><p>LeetCode Tracker is local-first. Your practice history stays in this browser.</p></footer></main>;
 }
