@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { localDate } from '../services/reviews';
-import { outcomeOptions, resolvePerceivedDifficulty } from '../services/attemptForm';
+import { outcomeOptions, resolvePerceivedDifficulty, snapDifficultyForOutcome } from '../services/attemptForm';
 import { saveAttempt } from '../db/saveAttempt';
 import type { HelpType, Outcome, PerceivedDifficulty } from '../types/models';
 
@@ -39,7 +39,7 @@ export function AttemptForm({ problemId, onSaved }: { problemId: string; onSaved
   function changeOutcome(next: Outcome) {
     setOutcome(next);
     setHelpType('');
-    setDifficulty((current) => resolvePerceivedDifficulty(next, current));
+    setDifficulty((current) => snapDifficultyForOutcome(next, current));
   }
 
   async function submit(event: FormEvent) {

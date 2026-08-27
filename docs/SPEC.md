@@ -16,7 +16,7 @@ The attempt form requires an outcome. Outcome options: `solved_independently`, `
 - `watched_solution` — no perceived-difficulty field (saved as `hard`); help type required, offered as `pseudocode` / `full_code` / `solution_video`.
 - `could_not_solve` — no perceived-difficulty field (saved as `hard`); no help type.
 
-Perceived difficulty defaults to `manageable` and snaps into range when the outcome changes. Duration is optional, integer 1–600 minutes. Notes are optional, trimmed, maximum 500 characters.
+Perceived difficulty defaults to `manageable`. When the outcome changes, a selection that is out of the new outcome's range snaps to that outcome's first allowed value; a selection the new outcome hides is preserved so switching away and back does not silently rewrite it. Outcomes that hide the field always save `hard`. Duration is optional, integer 1–600 minutes. Notes are optional, trimmed, maximum 500 characters.
 
 Quality is `strong` for independent plus easy/manageable; `partial` for independent plus hard or solved with hint; `weak` for watched solution or could not solve. Skipped creates no attempt and hides the recommendation for 24 hours.
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { outcomeOptions, resolvePerceivedDifficulty } from './attemptForm';
+import { outcomeOptions, resolvePerceivedDifficulty, snapDifficultyForOutcome } from './attemptForm';
 import { qualityFor } from './reviews';
 
 describe('outcomeOptions', () => {
@@ -37,6 +37,30 @@ describe('resolvePerceivedDifficulty', () => {
   it("saves 'hard' when difficulty is hidden for the outcome", () => {
     expect(resolvePerceivedDifficulty('watched_solution', 'easy')).toBe('hard');
     expect(resolvePerceivedDifficulty('could_not_solve', 'manageable')).toBe('hard');
+  });
+});
+
+describe('snapDifficultyForOutcome', () => {
+  it('snaps an out-of-range value into the new outcome\'s range', () => {
+    // 'easy' is not offered for a hinted solve
+    expect(snapDifficultyForOutcome('solved_with_hint', 'easy')).toBe('manageable');
+  });
+
+  it('preserves the selection when the new outcome hides the field', () => {
+    expect(snapDifficultyForOutcome('watched_solution', 'manageable')).toBe('manageable');
+    expect(snapDifficultyForOutcome('could_not_solve', 'easy')).toBe('easy');
+  });
+
+  it('does not rewrite a manageable solve after switching away and back', () => {
+    // solved_independently (manageable) -> could_not_solve -> solved_independently
+    const afterGiveUp = snapDifficultyForOutcome('could_not_solve', 'manageable');
+    const afterReturn = snapDifficultyForOutcome('solved_independently', afterGiveUp);
+    expect(afterReturn).toBe('manageable');
+  });
+
+  it('keeps an in-range selection unchanged', () => {
+    expect(snapDifficultyForOutcome('solved_independently', 'hard')).toBe('hard');
+    expect(snapDifficultyForOutcome('solved_with_hint', 'manageable')).toBe('manageable');
   });
 });
 
