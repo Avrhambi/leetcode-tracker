@@ -27,11 +27,19 @@ If an attempt for the same problem already exists on the same calendar day (from
 After three consecutive weak attempts on one problem it is flagged `struggling`. While the consecutive-weak run is at three or more, a further weak attempt schedules the next review on a 2-, 4-, 7-day ladder instead of the next day, so a persistent blind spot is not surfaced daily; a non-weak attempt resets the run and the next weak attempt starts the ladder over from the next day. For the new-problem topic pick, a `struggling` problem contributes a neutral 0.5 to its topic's mastery instead of its reset-to-0 stage, so the plan stops flooding new problems from a topic the user is stuck in — but the difficulty ceiling still uses the real stage, so a topic being failed never unlocks its harder problems. A strong attempt clears the flag; a partial attempt stops the weak run without clearing it.
 
 ## Screens
-The app is a single workbench screen. It shows, top to bottom: an XP/level strip; a one-line stat strip (current streak, attempts in the last 7 calendar days, due-review count); a search box; the topic map; today’s plan; a badge shelf. Settings is a top-corner button that opens a full-screen overlay (Esc or backdrop click closes it) with JSON export, JSON restore, and reset-all-data.
+The app is a single screen that never scrolls. The shell is a fixed `100dvh` grid with `overflow: hidden` on `html`/`body`; anything that can grow scrolls inside its own box instead — the side panel, the topic map's band list, and a modal body. There is no page footer.
 
-The topic map has one node per topic — a small SVG dot plus an HTML label — laid out in a CSS grid, grouped into three labelled bands — Foundations / Intermediate / Advanced — from `src/data/topicTiers.ts`; nodes keep catalog topic order within a band, and the grid reflows to fewer columns as the screen narrows so labels stay full-size. A node's dot radius and fill track that topic's mean review-stage mastery; a topic with any `struggling` problem gets a dashed warning ring. Clicking a node opens a side panel listing that topic's problems (NeetCode order, difficulty and status badges); clicking a node again, or the panel's Close button, dismisses it. Below 48rem the panel stacks under the map.
+The header carries, on one line: the title, the XP/level strip, the badge strip, and the Settings button. Below it a one-line stat strip (current streak, attempts in the last 7 calendar days, due-review count) ends with a "Today's challenge" button badged with the number of still-open plan items. Then the search box, and then the topic map, which takes all remaining height.
 
-The side panel has three modes: a topic's problem list (from a node), the search results (when the search box is non-empty, 200 ms debounced, matching problem title or topic — each row also shows the primary topic), and one problem's detail. Selecting a problem from either list swaps the panel to the problem detail — metadata, external LeetCode link, attempt history newest first, next review, and record-attempt action — with a Back button that returns to whichever list it was opened from. An empty search shows "No matching problems." There is no separate catalog screen and no full-page problem detail.
+Two things are modals, sharing one `Overlay` component (Esc or backdrop click closes; focus moves to the dialog on open; the panel caps at `85dvh` and its body scrolls): **Settings** (JSON export, JSON restore, reset-all-data, and the local-first note) and **Today's challenge** (the daily plan and its attempt form).
+
+The badge strip is a compact row of the six milestone marks — filled when earned, dim outline when locked — with each badge's label and hint in the tooltip and the SVG's accessible name, since the header has no room for cards.
+
+The topic map is a quest path: one winding trail through all 18 topics, walked tier by tier — Foundations / Intermediate / Advanced from `src/data/topicTiers.ts` — keeping catalog order inside each tier, with a gate label where the curriculum steps up. The route serpentines across three legs and rides a sine wave, so it reads as a hand-drawn trail rather than rows. Clicking a node opens the side panel; clicking it again, or Close, dismisses it. Below 48rem the panel stacks under the map.
+
+The side panel has two modes: a topic's problem list (from a node) and the search results (when the search box is non-empty, 200 ms debounced, matching problem title or topic — each row also shows the primary topic). An empty search shows "No matching problems."
+
+Selecting a problem from either list opens that problem **full screen**, in place of the map and panel: metadata, external LeetCode link, attempt history newest first, next review, and the record-attempt form. It is the one place real work happens and the map is not useful while working, so it gets the whole region. A Back button returns to whichever list it was opened from (the search query survives the round trip). This view is not a modal — it is a sibling of the map region, which is what keeps the back-target state and the search-clearing behaviour intact. It is also the one region that can genuinely exceed the viewport (form plus full history), so it scrolls inside its own box; the page still does not. There is no separate catalog screen.
 
 ## Streak
 The streak counts consecutive calendar days with at least one recorded attempt, up to and including the last active day — so a day without practice yet does not zero the streak, it holds at the run ending on the last active day. A returning user does not lose the whole streak on the first missed day: one grace day is always available and is spent automatically to bridge a single gap. Grace does not stretch to two adjacent missed days, and it is only ever counted as used once a later active day is actually reached — a gap before the user's first-ever attempt bridges nothing. Two or more consecutive missed days reset the streak to the run that follows the gap.
@@ -60,21 +68,65 @@ in one topic mastered), ten-day streak, halfway (75 distinct problems attempted)
 century (100). Each is a pure predicate over progress, attempts, the catalog, and
 the current streak length, checked after every attempt save. The earned set is
 stored as a monotonic union — once a badge is earned it is never lost, even when
-a later weak attempt resets the review stage that earned it. The workbench shows
-a shelf of all six (earned or locked); a badge that unlocks while the shelf is
-mounted gets a one-shot reveal fade. On restore of a backup that has no badge
-data, the shelf starts empty and re-fills on the next attempt.
+a later weak attempt resets the review stage that earned it. The header shows a
+compact strip of all six marks (filled when earned, dim outline when locked); a
+badge that unlocks while the strip is mounted gets a one-shot reveal fade. On
+restore of a backup that has no badge data, the strip starts all-locked and
+re-fills on the next attempt.
 
 ## Topic map and the struggling signal
-The workbench renders a topic map — one node per topic (a small SVG dot plus an
-HTML label) in a CSS grid, grouped into three labelled curriculum bands
-(Foundations / Intermediate / Advanced), each node's dot radius and fill set by
-that topic's mean review-stage mastery (a struggling problem counts at its real
-low stage). The grid reflows to fewer columns on narrow screens so labels never
-shrink. A topic with one or more problems
-currently flagged `struggling` gets a dashed warning ring on its node; there is
-no separate needs-attention list. The problems flagged `struggling` are still
-reachable through that topic's side panel.
+The workbench renders the topic map as a quest path — one continuous trail
+through every topic, walked tier by tier and drawn as an SVG on a fixed
+viewBox. The viewBox is load-bearing: the map scales into whatever box is left
+over and can never reflow or overflow, which is what allows the irregular
+placement under the no-scroll invariant. Earlier grid layouts had to trade
+column counts against crushed tiles to get the same guarantee. No per-width
+tuning exists, and nothing in the map scrolls.
+
+Node geometry is a pure, unit-tested function of the topic's index along the
+route (`src/services/topicPath.ts`), never random, so the curriculum ordering is
+preserved exactly and the map lays out identically on every render. Labels
+alternate above and below their node: topic names are much wider than the gap
+between nodes, and letting neighbours share a baseline is what makes the trail
+unreadable.
+
+Mastery is carried by three channels so none is load-bearing alone: the node's
+ring fills as a progress arc, its core steps the five-rung `--mastery-*` ramp,
+and its radius grows a step per rung. A fully cleared topic additionally gets a
+star and a slow halo (motion-clamped; the loop stops entirely under
+`prefers-reduced-motion`). The trail itself is dim for its whole length with the
+travelled portion lit over it — lit as far as the furthest topic the user has
+attempted, so the glow tracks the journey rather than sliding backwards when a
+newly started topic drags the mean mastery down.
+
+A topic with one or more problems currently flagged `struggling` is drawn in
+warning red with a dashed ring — deliberately **off** the mastery ramp, which
+stays monotone within the phosphor family, so "needs a different approach" can
+never be read as a rung on the ladder. There is no separate needs-attention
+list; the flagged problems remain reachable through that topic's side panel.
+
+## Status labels
+`ProgressStatus` is spoken to the user as a strength ladder: `not_started` →
+"Not started", `attempted` → "Weak", `solved` → "Mid", `mastered` → "Mastered",
+each chip carrying a one-line explanation in its tooltip. The chips use the same
+monotone `--mastery-*` ramp as the topic map, so one screen describes mastery in
+a single colour language.
+
+The ladder never uses "solved" as a **status**, because that is exactly the word
+it exists to disambiguate. A completed item in the daily-challenge modal is
+chipped "Logged" — it says an attempt was recorded, which is all that action
+means, and leaves the strength claim to the status chip. The attempt-outcome
+labels ("Solved it on my own", "Solved it after a hint") deliberately keep the
+word: there it names what happened on one attempt, not a rung on the ladder.
+
+This mapping lives in `src/services/statusLabels.ts` and is **display-only** —
+the stored enum in `src/types/models.ts` is unchanged. The stored names are
+misleading on their own (`attempted` is set when the last attempt came out
+*weak*, `solved` when the problem entered the review rotation, and status is
+recomputed every attempt so it can fall back down), but the enum is persisted in
+Dexie and read by `badges.ts`, `dailyPlan.ts`, `mastery.ts`, `recommendations.ts`
+and the backup payload. **Do not "fix" the mismatch by renaming the stored
+values** — that is a migration plus a backup-format break for a wording problem.
 
 ## States and limits
 Initial seeding shows a blocking loading state. A topic with no problems shows nothing in its panel; a search with no matches shows "No matching problems." Successful saves update the screen immediately and show a message for 2 seconds. Database or file failures show an inline error and Retry; no automatic retry. Export contains all local user data as a `formatVersion` 2 payload, including the gamification XP-and-badges row when present. Restore accepts one `.json` file up to 5 MB of format version 1 or 2, validates the full payload before replacing data, defaults the version-2 fields when restoring a version-1 file, rebuilds lifetime XP from the restored attempts when the payload carries no gamification row, and leaves existing data unchanged on failure. Reset requires typing `RESET` exactly. The side-panel problem lists are never paginated.

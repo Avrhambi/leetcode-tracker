@@ -46,6 +46,7 @@ export function Settings() {
   };
 
   return <section className="settings"><div className="section-heading"><div><p className="eyebrow">Your data</p><h2>Settings</h2></div></div>
+    <p className="settings-note">LeetCode Tracker is local-first. Your practice history stays in this browser.</p>
     <article><h3>Export backup</h3><p>Download all local study data as JSON.</p><button type="button" onClick={() => void exportBackup()}>Export JSON</button></article>
     <article><h3>Restore backup</h3><p>Replace local study data with a JSON backup file (up to 5 MB).</p><input aria-label="Backup JSON file" type="file" accept="application/json,.json" onChange={(event) => { const file = event.target.files?.[0] ?? null; setLastFile(file); if (file) void importBackup(file); }} /></article>
     <article><h3>Reset all data</h3><p>Type <code>RESET</code> to erase study data and reseed the catalog.</p><label>Confirmation<input value={confirmation} onChange={(event) => setConfirmation(event.target.value)} /></label><button type="button" disabled={confirmation !== 'RESET'} onClick={() => void reset()}>Reset all data</button></article>

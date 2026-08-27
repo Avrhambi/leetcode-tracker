@@ -1,5 +1,6 @@
 import type { TopicMasteryCell } from '../services/mastery';
 import { TIER_LABELS, topicTier, type TopicTier } from '../data/topicTiers';
+import { layoutPath, trackPath, VIEW_H, VIEW_W, type PathNode } from '../services/topicPath';
 
 interface TopicMapProps {
   cells: TopicMasteryCell[];
@@ -8,32 +9,51 @@ interface TopicMapProps {
   onSelectTopic: (topic: string) => void;
 }
 
-// The centrepiece: every topic as a node, grouped into three labelled bands —
-// Foundations / Intermediate / Advanced — from the curriculum tiers. Node size
-// and fill track that topic's mastery; a struggling topic gets a warning ring.
-// Deliberately banded, not a dependency DAG. Nodes are buttons: click opens the
-// topic's problems in the side panel.
+// The topic map as a quest path: one winding trail through all 18 topics in
+// curriculum order, each topic a node whose ring fills with mastery.
 //
-// Each band is a CSS grid of fixed-size cells; the dot is a small self-contained
-// SVG and the label is plain HTML, so wrapping is width-driven with no viewBox
-// scaling and labels stay legible at every width.
-const NODE_BOX = 44; // px viewBox for one node's dot
+// It is an SVG on a fixed viewBox, which is what lets the placement be
+// irregular. Earlier grid layouts kept perfect alignment and so always read as
+// a table however much the tile sizes varied; here a node's position is a point
+// on a spline, and the trail is the thing the eye follows. The viewBox also
+// makes the map overflow-proof by construction — it scales into whatever box
+// the map region gets and can never push the page into a scroll.
+//
+// Placement is a deterministic function of catalog index (services/topicPath.ts),
+// so the curriculum ordering the user likes is preserved exactly.
 
-function Node({ cell, struggling, selected, onSelect }: {
+const NODE_R = 3.4;
+
+// Mastery rung, 0–4 — the fill token and the node's size step.
+function masteryBand(mastery: number): 0 | 1 | 2 | 3 | 4 {
+  if (mastery >= 0.85) return 4;
+  if (mastery >= 0.6) return 3;
+  if (mastery >= 0.35) return 2;
+  if (mastery > 0) return 1;
+  return 0;
+}
+
+function Node({ node, cell, struggling, selected, onSelect }: {
+  node: PathNode;
   cell: TopicMasteryCell;
   struggling: boolean;
   selected: boolean;
   onSelect: () => void;
 }) {
-  const c = NODE_BOX / 2;
-  const r = 5 + cell.mastery * 11;
-  const filled = cell.mastery >= 0.5;
+  const band = masteryBand(cell.mastery);
   const pct = Math.round(cell.mastery * 100);
-  const classes = ['topic-node', filled ? 'filled' : '', struggling ? 'struggling' : '', selected ? 'selected' : '']
+  // Mastery is carried by three channels so no single one is load-bearing:
+  // the ring's fill arc, the core's colour rung, and the node's radius.
+  const radius = NODE_R + band * 0.45;
+  const circumference = 2 * Math.PI * (radius + 1.4);
+  const complete = cell.mastery >= 1;
+
+  const classes = ['path-node', struggling ? 'struggling' : '', selected ? 'selected' : '', complete ? 'complete' : '']
     .filter(Boolean).join(' ');
 
-  return <div
+  return <g
     className={classes}
+    data-band={band}
     role="button"
     tabIndex={0}
     aria-pressed={selected}
@@ -46,59 +66,105 @@ function Node({ cell, struggling, selected, onSelect }: {
       }
     }}
   >
-    <svg className="topic-node-dot-svg" viewBox={`0 0 ${NODE_BOX} ${NODE_BOX}`} aria-hidden="true">
-      {selected && <circle className="topic-node-ring" cx={c} cy={c} r={r + 6} />}
-      {struggling && <circle className="topic-node-warn" cx={c} cy={c} r={r + 3} />}
-      <circle className="topic-node-dot" cx={c} cy={c} r={r} />
-    </svg>
-    <span className="topic-node-label">{cell.topic}</span>
-  </div>;
-}
-
-function Band({ tier, cells, strugglingTopics, selectedTopic, onSelectTopic }: {
-  tier: TopicTier;
-  cells: TopicMasteryCell[];
-  strugglingTopics: Set<string>;
-  selectedTopic: string | null;
-  onSelectTopic: (topic: string) => void;
-}) {
-  if (cells.length === 0) return null;
-
-  return <div className="tier-band">
-    <p className="tier-band-label eyebrow">{TIER_LABELS[tier]}</p>
-    <div className="tier-band-nodes" role="group" aria-label={`${TIER_LABELS[tier]} topics`}>
-      {cells.map((cell) => (
-        <Node
-          key={cell.topic}
-          cell={cell}
-          struggling={strugglingTopics.has(cell.topic)}
-          selected={cell.topic === selectedTopic}
-          onSelect={() => onSelectTopic(cell.topic)}
-        />
-      ))}
-    </div>
-  </div>;
+    {/* Hit area — comfortably larger than the drawn node. */}
+    <circle className="path-node-hit" cx={node.x} cy={node.y} r={radius + 4} />
+    <circle className="path-node-track" cx={node.x} cy={node.y} r={radius + 1.4} />
+    {/* The progress ring: stroke-dasharray draws the mastered fraction, rotated
+        to start at 12 o'clock. */}
+    <circle
+      className="path-node-ring"
+      cx={node.x}
+      cy={node.y}
+      r={radius + 1.4}
+      strokeDasharray={`${(circumference * cell.mastery).toFixed(2)} ${circumference.toFixed(2)}`}
+      transform={`rotate(-90 ${node.x} ${node.y})`}
+    />
+    <circle className="path-node-core" cx={node.x} cy={node.y} r={radius} />
+    {complete && <text className="path-node-check" x={node.x} y={node.y} dy="0.09em" textAnchor="middle">★</text>}
+    <text
+      className="path-node-label"
+      x={node.x}
+      y={node.labelBelow ? node.y + radius + 4.4 : node.y - radius - 2.4}
+      textAnchor="middle"
+    >{cell.topic}</text>
+  </g>;
 }
 
 export function TopicMap({ cells, strugglingTopics, selectedTopic, onSelectTopic }: TopicMapProps) {
   if (cells.length === 0) return null;
 
-  // Group by tier, keeping catalog topic order within each band.
-  const byTier: Record<TopicTier, TopicMasteryCell[]> = { 1: [], 2: [], 3: [] };
-  for (const cell of cells) byTier[topicTier(cell.topic)].push(cell);
+  // Walk the topics tier by tier, keeping catalog order inside each tier — the
+  // same ordering the previous bands used, now expressed as one continuous route.
+  const ordered: { topic: string; tier: TopicTier }[] = [];
+  for (const tier of [1, 2, 3] as TopicTier[]) {
+    for (const cell of cells) if (topicTier(cell.topic) === tier) ordered.push({ topic: cell.topic, tier });
+  }
+
+  const nodes = layoutPath(ordered);
+  const cellByTopic = new Map(cells.map((cell) => [cell.topic, cell]));
+  const track = trackPath(nodes);
+
+  // The lit portion of the trail: how far along the *route* the user has come,
+  // not their average mastery. The trail lights up to the last node they have
+  // touched, so the glow tracks the journey rather than sliding back when a new
+  // topic drags the mean down.
+  const lastTouched = nodes.reduce(
+    (furthest, node) => ((cellByTopic.get(node.topic)?.attempted ?? 0) > 0 ? node.index : furthest),
+    -1
+  );
+  const progress = nodes.length < 2 ? 0 : Math.max(0, lastTouched) / (nodes.length - 1);
+  const clearedTopics = cells.filter((cell) => cell.mastery >= 1).length;
 
   return <section className="topic-map" aria-labelledby="topic-map-heading">
-    <p className="eyebrow" id="topic-map-heading">Topic map</p>
-    <p className="topic-map-hint">Bigger, brighter nodes are more mastered. Pick a topic to see its problems.</p>
-    {([1, 2, 3] as TopicTier[]).map((tier) => (
-      <Band
-        key={tier}
-        tier={tier}
-        cells={byTier[tier]}
-        strugglingTopics={strugglingTopics}
-        selectedTopic={selectedTopic}
-        onSelectTopic={onSelectTopic}
-      />
-    ))}
+    <div className="topic-map-head">
+      <p className="eyebrow" id="topic-map-heading">The route</p>
+      <p className="topic-map-hint">
+        <b>{clearedTopics}</b> of <b>{cells.length}</b> topics cleared · follow the trail, pick a stop to see its problems
+      </p>
+    </div>
+    <div className="topic-map-canvas">
+      <svg
+        viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
+        preserveAspectRatio="xMidYMid meet"
+        className="topic-path"
+        role="group"
+        aria-label="Topic route"
+      >
+        {/* The trail: a dim full route with the travelled portion lit over it. */}
+        <path className="topic-track" d={track} pathLength={1} />
+        <path
+          className="topic-track-lit"
+          d={track}
+          pathLength={1}
+          strokeDasharray={`${progress.toFixed(3)} 1`}
+        />
+        {/* Tier gates — where the curriculum steps up. */}
+        {nodes.filter((node) => node.tierStart).map((node) => (
+          <text
+            key={`gate-${node.tier}`}
+            className="tier-gate"
+            x={node.x}
+            /* Opposite the node's own label, and far enough out to clear the
+               neighbouring node's label on that same side. */
+            y={node.labelBelow ? node.y - 8.5 : node.y + 10.5}
+            textAnchor="middle"
+          >
+            {TIER_LABELS[node.tier]}
+          </text>
+        ))}
+        {nodes.map((node) => {
+          const cell = cellByTopic.get(node.topic);
+          if (!cell) return null;
+          return <Node
+            key={node.topic}
+            node={node}
+            cell={cell}
+            struggling={strugglingTopics.has(node.topic)}
+            selected={node.topic === selectedTopic}
+            onSelect={() => onSelectTopic(node.topic)}
+          />;
+        })}
+      </svg>
+    </div>
   </section>;
 }

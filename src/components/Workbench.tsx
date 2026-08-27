@@ -3,12 +3,11 @@ import { STREAK_GRACE_PER_WEEK } from '../services/constants';
 import { currentStreak, type StreakGraceState } from '../services/streak';
 import { masteryByTopic } from '../services/mastery';
 import type { DailyPlanItem } from '../services/dailyPlan';
-import type { GamificationView } from '../hooks/useGamification';
-import { GamificationBar } from './GamificationBar';
-import { BadgeShelf } from './BadgeShelf';
 import { TopicMap } from './TopicMap';
 import { SidePanel, type Panel } from './SidePanel';
+import { ProblemDetail } from './ProblemDetail';
 import { DailyPlan } from './DailyPlan';
+import { Overlay } from './Overlay';
 import type { AppSetting, Attempt, CatalogProblem, ProblemProgress, ProgressStatus } from '../types/models';
 
 interface WorkbenchProps {
@@ -17,7 +16,6 @@ interface WorkbenchProps {
   progress: ProblemProgress[];
   progressByProblem: Map<string, ProgressStatus>;
   settings: AppSetting[];
-  gamification: GamificationView | undefined;
   planItems: DailyPlanItem[];
   completedProblemIds: Set<string>;
   onSkip: (item: DailyPlanItem) => Promise<void>;
@@ -45,10 +43,11 @@ function graceStateFrom(settings: AppSetting[]): StreakGraceState {
 // The single screen: XP strip, a search box, the tiered topic map (with the
 // bare-minimum stats above it and a side panel for a topic's problems, the
 // search results, or one problem's detail), today's plan, badge shelf.
-export function Workbench({ attempts, problems, progress, progressByProblem, settings, gamification, planItems, completedProblemIds, onSkip }: WorkbenchProps) {
+export function Workbench({ attempts, problems, progress, progressByProblem, settings, planItems, completedProblemIds, onSkip }: WorkbenchProps) {
   const [panel, setPanel] = useState<Panel | null>(null);
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
+  const [challengeOpen, setChallengeOpen] = useState(false);
 
   // 200 ms debounce (CLAUDE.md convention for search).
   useEffect(() => {
@@ -75,6 +74,10 @@ export function Workbench({ attempts, problems, progress, progressByProblem, set
   const attemptsThisWeek = attempts.filter((attempt) => attempt.attemptedOn >= weekStart && attempt.attemptedOn <= today).length;
   const activeDates = new Set(attempts.map((attempt) => attempt.attemptedOn));
   const { streak, graceDaysUsed } = currentStreak(activeDates, graceStateFrom(settings));
+
+  // Items still open today — the count on the challenge trigger, so an untouched
+  // challenge is visible without opening the modal.
+  const openChallenges = planItems.filter((item) => !completedProblemIds.has(item.problem.id)).length;
 
   const problemById = new Map(problems.map((problem) => [problem.id, problem]));
   const strugglingTopics = new Set(
@@ -104,12 +107,18 @@ export function Workbench({ attempts, problems, progress, progressByProblem, set
   };
 
   return <section className="workbench" aria-label="Practice workbench">
-    {gamification && <GamificationBar snapshot={gamification} />}
-
     <div className="workbench-stats" aria-label="Progress summary">
       <span><b>{streak}</b> day streak{graceDaysUsed > 0 && <> · <span className="grace-note">{graceDaysUsed} grace {graceDaysUsed === 1 ? 'day' : 'days'}</span></>}</span>
       <span><b>{attemptsThisWeek}</b> attempts · 7 days</span>
       <span><b>{dueReviews}</b> due reviews</span>
+      <button
+        type="button"
+        className="challenge-trigger"
+        data-open={openChallenges > 0}
+        onClick={() => setChallengeOpen(true)}
+      >
+        Today's challenge{openChallenges > 0 && <span className="challenge-count">{openChallenges}</span>}
+      </button>
     </div>
 
     <input
@@ -121,25 +130,33 @@ export function Workbench({ attempts, problems, progress, progressByProblem, set
       aria-label="Search problems"
     />
 
-    <div className={`workbench-map${panel ? ' has-panel' : ''}`}>
-      <TopicMap
-        cells={masteryByTopic(problems, progress)}
-        strugglingTopics={strugglingTopics}
-        selectedTopic={selectedTopic}
-        onSelectTopic={toggleTopic}
-      />
-      {panel && <SidePanel
-        panel={panel}
-        problems={problems}
-        progressByProblem={progressByProblem}
-        onSelectProblem={(problem, back) => setPanel({ kind: 'problem', problem, back })}
-        onBack={(target) => setPanel(target)}
-        onClose={closePanel}
-      />}
-    </div>
+    {/* A problem takes the whole screen: it is the one place real work happens,
+        and the map is not useful while you are working. It replaces the map
+        region rather than opening in an overlay, so `panel.back` still carries
+        the list to return to. */}
+    {panel?.kind === 'problem'
+      ? <div className="workbench-focus">
+          <ProblemDetail problem={panel.problem} onBack={() => setPanel(panel.back)} />
+        </div>
+      : <div className={`workbench-map${panel ? ' has-panel' : ''}`}>
+          <TopicMap
+            cells={masteryByTopic(problems, progress)}
+            strugglingTopics={strugglingTopics}
+            selectedTopic={selectedTopic}
+            onSelectTopic={toggleTopic}
+          />
+          {panel && <SidePanel
+            panel={panel}
+            problems={problems}
+            progressByProblem={progressByProblem}
+            onSelectProblem={(problem, back) => setPanel({ kind: 'problem', problem, back })}
+            onClose={closePanel}
+          />}
+        </div>}
 
-    <DailyPlan items={planItems} completedProblemIds={completedProblemIds} onSkip={onSkip} />
+    {challengeOpen && <Overlay label="Today's challenge" onClose={() => setChallengeOpen(false)}>
+      <DailyPlan items={planItems} completedProblemIds={completedProblemIds} onSkip={onSkip} />
+    </Overlay>}
 
-    {gamification && <BadgeShelf earned={gamification.badges} />}
   </section>;
 }
