@@ -38,18 +38,17 @@ export function BadgeShelf({ earned }: BadgeShelfProps) {
     };
   }, [earned]);
 
-  return <section className="badge-shelf" aria-labelledby="badge-shelf-heading">
-    <p className="eyebrow" id="badge-shelf-heading">Badges · {earnedSet.size} / {BADGES.length}</p>
-    <ul className="badge-grid">
-      {BADGES.map((badge) => {
-        const isEarned = earnedSet.has(badge.id);
-        const classes = ['milestone', isEarned ? 'earned' : 'locked', fresh.has(badge.id) ? 'fresh' : ''].filter(Boolean).join(' ');
-        return <li className={classes} key={badge.id}>
-          <svg className="milestone-mark" viewBox="0 0 100 100" aria-hidden="true">{MARKS[badge.id]}</svg>
-          <b>{badge.label}</b>
-          <span>{isEarned ? 'Earned' : badge.hint}</span>
-        </li>;
-      })}
-    </ul>
-  </section>;
+  // A compact strip of marks — the header slot on a screen that does not scroll
+  // has no room for cards, so each badge carries its label and hint in the
+  // tooltip and the accessible name instead.
+  return <ul className="badge-strip" aria-label={`Badges, ${earnedSet.size} of ${BADGES.length} earned`}>
+    {BADGES.map((badge) => {
+      const isEarned = earnedSet.has(badge.id);
+      const classes = ['milestone', isEarned ? 'earned' : 'locked', fresh.has(badge.id) ? 'fresh' : ''].filter(Boolean).join(' ');
+      const description = isEarned ? `${badge.label} — earned` : `${badge.label} — locked. ${badge.hint}`;
+      return <li className={classes} key={badge.id} title={description}>
+        <svg className="milestone-mark" viewBox="0 0 100 100" role="img" aria-label={description}>{MARKS[badge.id]}</svg>
+      </li>;
+    })}
+  </ul>;
 }

@@ -4,9 +4,11 @@
 
 /* Hallmark · pre-emit critique: P5 H4 E5 S5 R4 V4 */
 * { box-sizing: border-box; }
-html, body { overflow-x: clip; }
+/* Single-screen shell: the page itself never scrolls. Everything that can grow
+   (the side panel, a modal body) scrolls inside its own box instead. */
+html, body { height: 100%; overflow: hidden; }
 body { margin: 0; min-width: 20rem; color: var(--color-ink); background: var(--color-paper); font-family: var(--font-body); line-height: 1.5; }
-main { width: min(72rem, calc(100% - var(--space-2xl))); margin-inline: auto; margin-block: var(--space-lg) var(--space-3xl); }
+main { display: grid; grid-template-rows: auto minmax(0, 1fr); width: min(72rem, calc(100% - var(--space-2xl))); height: 100dvh; padding-block: var(--space-md); margin-inline: auto; overflow: hidden; }
 h1, h2, h3 { color: var(--color-ink); font-family: var(--font-display); font-style: normal; font-weight: 800; letter-spacing: 0.015em; line-height: 1.05; overflow-wrap: anywhere; margin-top: 0; }
 h1 { margin-bottom: var(--space-2xs); }
 h2 { margin-bottom: var(--space-2xs); }
@@ -18,10 +20,13 @@ button, input, select, textarea, a { transition: background-color var(--dur-shor
 :focus-visible { outline: 2px solid var(--color-focus); outline-offset: 3px; }
 
 /* ---- App header (compact hero) ---- */
-.app-header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-md); margin-bottom: var(--space-lg); padding-block-end: var(--space-sm); border-block-end: var(--rule-hair) solid var(--color-rule); }
-.app-intro { min-width: 0; }
+/* Title · XP strip · badge strip · Settings, all on one line. The XP strip takes
+   the slack so the badges and Settings stay pinned right. */
+.app-header { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-md); margin-bottom: var(--space-md); padding-block-end: var(--space-sm); border-block-end: var(--rule-hair) solid var(--color-rule); }
+.app-intro { flex: 0 0 auto; min-width: 0; }
+.app-header .xp-bar { flex: 1 1 12rem; min-width: 0; }
 .app-header .eyebrow, .eyebrow { color: var(--color-accent); font-family: var(--font-body); font-size: var(--text-xs); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
-.app-header h1 { max-width: none; margin: var(--space-2xs) 0 0; font-size: var(--text-xl); text-transform: uppercase; overflow-wrap: normal; word-break: keep-all; }
+.app-header h1 { max-width: none; margin: 0; font-size: var(--text-lg); text-transform: uppercase; overflow-wrap: normal; word-break: keep-all; }
 .settings-toggle { flex: 0 0 auto; min-height: 2.5rem; padding: var(--space-2xs) var(--space-sm); color: var(--color-ink-2); background: transparent; border: var(--rule-hair) solid var(--color-rule); border-radius: var(--radius-none); cursor: pointer; white-space: nowrap; }
 .settings-toggle:not(:disabled):hover { color: var(--color-accent); border-color: var(--color-rule-2); }
 
@@ -30,42 +35,82 @@ button, input, select, textarea, a { transition: background-color var(--dur-shor
 .section-heading h2, .daily-plan > h2 { font-size: var(--text-2xl); text-transform: uppercase; }
 
 /* ---- Cards / shared surfaces ---- */
-.daily-plan, .catalog-row, .attempt-form, .settings article, .empty-state, .topic-panel { color: var(--color-ink); background: var(--color-paper-2); border: var(--rule-hair) solid var(--color-rule); border-radius: var(--radius-none); box-shadow: none; }
+.catalog-row, .attempt-form, .settings article, .empty-state, .topic-panel { color: var(--color-ink); background: var(--color-paper-2); border: var(--rule-hair) solid var(--color-rule); border-radius: var(--radius-none); box-shadow: none; }
 .grace-note { color: var(--color-accent); font-weight: 700; }
 
 /* ---- Workbench (single screen) ---- */
-.workbench { display: grid; gap: var(--space-lg); }
-.workbench-stats { display: flex; flex-wrap: wrap; gap: var(--space-lg); padding: var(--space-sm) 0; color: var(--color-neutral); font-size: var(--text-sm); border-block: var(--rule-hair) solid var(--color-rule); }
+/* Stats, search, then the map taking every remaining pixel. `minmax(0, 1fr)` (not
+   plain `1fr`) is what lets the map row shrink below its content instead of
+   pushing the shell past the viewport. */
+.workbench { display: grid; grid-template-rows: auto auto minmax(0, 1fr); gap: var(--space-md); min-height: 0; overflow: hidden; }
+.workbench-stats { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-lg); padding: var(--space-sm) 0; color: var(--color-neutral); font-size: var(--text-sm); border-block: var(--rule-hair) solid var(--color-rule); }
 .workbench-stats b { color: var(--color-accent); font-family: var(--font-display); font-size: var(--text-lg); }
 .workbench-search { width: 100%; padding: var(--space-xs) var(--space-md); color: var(--color-ink); background: var(--color-paper-2); border: var(--rule-hair) solid var(--color-rule); border-radius: var(--radius-none); font: inherit; font-size: var(--text-sm); }
 .workbench-search:focus-visible { outline: var(--rule-hair) solid var(--color-accent); border-color: var(--color-accent); }
-.workbench-map { display: grid; gap: var(--space-lg); }
-.workbench-map.has-panel { grid-template-columns: minmax(0, 1fr) minmax(0, 26rem); align-items: start; }
+.workbench-map { display: grid; gap: var(--space-md); min-height: 0; overflow: hidden; }
+.workbench-map.has-panel { grid-template-columns: minmax(0, 1fr) minmax(0, 26rem); align-items: stretch; }
 
 /* ---- Topic map ---- */
-.topic-map { padding: var(--space-lg); background: var(--color-paper-2); border: var(--rule-hair) solid var(--color-rule); }
-.topic-map > .eyebrow { margin-bottom: var(--space-2xs); }
-.topic-map-hint { margin-bottom: var(--space-lg); color: var(--color-muted); font-size: var(--text-xs); }
-.tier-band + .tier-band { margin-top: var(--space-md); padding-top: var(--space-md); border-top: var(--rule-hair) solid var(--color-rule); }
-.tier-band-label { margin-bottom: var(--space-xs); }
-.tier-band-nodes { display: grid; grid-template-columns: repeat(auto-fill, minmax(5.5rem, 1fr)); gap: var(--space-sm) var(--space-2xs); justify-items: center; }
-.topic-node { display: flex; flex-direction: column; align-items: center; gap: var(--space-2xs); width: 100%; padding: var(--space-2xs) 0; cursor: pointer; }
-.topic-node:focus-visible { outline: none; }
-.topic-node:focus-visible .topic-node-dot { stroke: var(--color-focus); stroke-width: 2.5; }
-.topic-node-dot-svg { display: block; width: 2.75rem; height: 2.75rem; overflow: visible; }
-.topic-node-dot { fill: var(--color-paper-3); stroke: var(--color-rule-2); stroke-width: 1.5; transition: fill var(--dur-medium) var(--ease-out), r var(--dur-medium) var(--ease-out); }
-.topic-node.filled .topic-node-dot { fill: var(--color-accent); stroke: var(--color-accent); }
-.topic-node.struggling .topic-node-dot { fill: var(--color-error); stroke: var(--color-error); }
-.topic-node-warn { fill: none; stroke: var(--color-error); stroke-width: 1.5; stroke-dasharray: 3 3; }
-.topic-node-ring { fill: none; stroke: var(--color-accent); stroke-width: 2; }
-.topic-node-label { color: var(--color-neutral); font-family: var(--font-body); font-size: var(--text-xs); line-height: 1.2; text-align: center; }
-.topic-node.selected .topic-node-label { color: var(--color-ink); }
+.topic-map { display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; padding: var(--space-lg); overflow: hidden; background: var(--color-paper-2); border: var(--rule-hair) solid var(--color-rule); }
+.topic-map-head { margin-bottom: var(--space-md); }
+.topic-map-head > .eyebrow { margin-bottom: var(--space-2xs); }
+.topic-map-hint { margin: 0; color: var(--color-muted); font-size: var(--text-xs); }
+
+/* The quest path. The SVG carries a fixed viewBox, so it scales into whatever
+   box the map region gets and can never overflow or reflow — that is what makes
+   the irregular placement safe under the no-scroll invariant, where the earlier
+   grid layouts had to fight column counts and band heights. Nothing here scrolls. */
+.topic-map-canvas { display: grid; min-height: 0; overflow: hidden; }
+.topic-path { width: 100%; height: 100%; min-height: 0; overflow: visible; }
+
+/* The trail: dim full route, with the travelled portion lit over it. */
+.topic-track { fill: none; stroke: var(--color-rule); stroke-width: 0.7; stroke-linecap: round; stroke-dasharray: 2 2.2; opacity: 0.7; }
+.topic-track-lit { fill: none; stroke: var(--color-accent-deep); stroke-width: 1.1; stroke-linecap: round; filter: drop-shadow(0 0 1.2px var(--color-accent-deep)); transition: stroke-dasharray var(--dur-medium) var(--ease-out); }
+
+.tier-gate { fill: var(--color-muted); font-family: var(--font-display); font-size: 3.1px; letter-spacing: 0.16em; text-transform: uppercase; }
+
+.path-node { cursor: pointer; }
+.path-node-hit { fill: transparent; }
+.path-node-track { fill: none; stroke: var(--color-rule); stroke-width: 0.8; }
+.path-node-ring { fill: none; stroke: var(--color-accent); stroke-width: 1.1; stroke-linecap: round; transition: stroke-dasharray var(--dur-medium) var(--ease-out); }
+.path-node-core { fill: var(--mastery-0); stroke: var(--color-rule-2); stroke-width: 0.35; transition: fill var(--dur-medium) var(--ease-out); }
+.path-node[data-band='1'] .path-node-core { fill: var(--mastery-1); }
+.path-node[data-band='2'] .path-node-core { fill: var(--mastery-2); }
+.path-node[data-band='3'] .path-node-core { fill: var(--mastery-3); }
+.path-node[data-band='4'] .path-node-core { fill: var(--mastery-4); }
+
+.path-node-label { fill: var(--color-neutral); font-family: var(--font-body); font-size: 2.7px; }
+.path-node-check { fill: var(--mastery-ink-bright); font-size: 3.6px; dominant-baseline: middle; }
+/* A cleared topic gets a slow halo — the one showy flourish, motion-clamped below. */
+.path-node.complete .path-node-track { stroke: var(--color-accent); animation: node-halo 2.6s var(--ease-in-out) infinite; }
+.path-node.complete .path-node-label { fill: var(--color-ink); }
+
+/* Off the mastery ramp on purpose: "needs a different approach" must never read
+   as a rung on the ladder. */
+.path-node.struggling .path-node-core { fill: color-mix(in oklch, var(--color-error) 45%, oklch(20% 0.03 25)); stroke: var(--color-error); }
+.path-node.struggling .path-node-track { stroke: var(--color-error); stroke-dasharray: 1.1 1.1; }
+.path-node.struggling .path-node-ring { stroke: var(--color-error); }
+.path-node.struggling .path-node-label { fill: oklch(88% 0.09 25); }
+
+.path-node.selected .path-node-track { stroke: var(--color-accent); stroke-width: 1.2; }
+.path-node.selected .path-node-label { fill: var(--color-accent); }
+.path-node:focus-visible { outline: none; }
+.path-node:focus-visible .path-node-track { stroke: var(--color-focus); stroke-width: 1.4; }
 @media (hover: hover) and (pointer: fine) {
-  .topic-node:hover .topic-node-dot { fill: var(--color-accent-deep); stroke: var(--color-accent-deep); }
+  .path-node:hover .path-node-core { stroke: var(--color-accent); stroke-width: 0.7; }
+  .path-node:hover .path-node-label { fill: var(--color-ink); }
+}
+
+@keyframes node-halo {
+  0%, 100% { opacity: 0.45; stroke-width: 0.8; }
+  50% { opacity: 1; stroke-width: 1.5; }
 }
 
 /* ---- Topic panel (side panel) ---- */
-.topic-panel { padding: var(--space-lg); }
+/* The one region on the workbench allowed to scroll: its head stays pinned and
+   the list below it takes the overflow. */
+.topic-panel { display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; padding: var(--space-lg); overflow: hidden; }
+.topic-panel > .catalog-list, .topic-panel > .empty-state { grid-row: 2; min-height: 0; overflow-y: auto; }
 .topic-panel-head { display: flex; align-items: start; justify-content: space-between; gap: var(--space-sm); margin-bottom: var(--space-md); }
 .topic-panel-count { margin: var(--space-2xs) 0 0; color: var(--color-neutral); font-size: var(--text-xs); }
 .topic-panel-close, .settings-overlay-close { min-height: 2.25rem; padding: var(--space-2xs) var(--space-sm); color: var(--color-ink-2); background: transparent; border: var(--rule-hair) solid var(--color-rule); border-radius: var(--radius-none); cursor: pointer; }
@@ -73,24 +118,40 @@ button, input, select, textarea, a { transition: background-color var(--dur-shor
 .topic-panel .catalog-row { grid-template-columns: 2rem minmax(0, 1fr); padding: var(--space-md); background: var(--color-paper); }
 .topic-panel .catalog-row .problem-meta { grid-column: 2; justify-items: start; grid-auto-flow: column; justify-content: start; gap: var(--space-xs); margin-top: var(--space-2xs); }
 .topic-panel .problem-link h3 { font-size: var(--text-base); }
-.topic-panel-detail .problem-detail { max-width: none; }
 
-/* ---- Settings overlay ---- */
-.settings-overlay { position: fixed; inset: 0; z-index: 10; display: grid; padding: var(--space-lg); overflow-y: auto; background: color-mix(in oklch, var(--color-paper) 88%, transparent); }
-.settings-overlay-panel { width: min(48rem, 100%); margin: auto; padding: var(--space-xl); background: var(--color-paper-2); border: var(--rule-hair) solid var(--color-rule-2); }
-.settings-overlay-close { margin-bottom: var(--space-lg); }
+/* ---- Full-screen problem view ---- */
+/* Takes the map region entirely. It is the one screen that can genuinely exceed
+   the viewport (attempt form plus full history), so it scrolls inside its own
+   box like every other growable region — the page itself still does not. */
+.workbench-focus { min-height: 0; padding: var(--space-lg); overflow-y: auto; background: var(--color-paper-2); border: var(--rule-hair) solid var(--color-rule); }
+.workbench-focus .problem-detail { max-width: 52rem; margin-inline: auto; }
 
-/* ---- Daily plan ("Today" strip) ---- */
-.daily-plan { padding: var(--space-xl); margin-bottom: var(--space-xl); }
+/* ---- Overlay (settings + today's challenge) ---- */
+/* The panel is capped and its body scrolls, so a tall modal never scrolls the
+   page behind it. */
+.settings-overlay { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; padding: var(--space-lg); background: color-mix(in oklch, var(--color-paper) 88%, transparent); }
+.settings-overlay-panel { display: grid; grid-template-rows: auto minmax(0, 1fr); width: min(48rem, 100%); max-height: 85dvh; padding: var(--space-xl); overflow: hidden; background: var(--color-paper-2); border: var(--rule-hair) solid var(--color-rule-2); }
+.settings-overlay-close { justify-self: end; margin-bottom: var(--space-lg); }
+.settings-overlay-body { min-height: 0; overflow-y: auto; }
+
+/* ---- Daily plan (inside the "Today's challenge" modal) ---- */
+/* The modal panel already supplies the surface, so the plan itself is bare. */
+.daily-plan { padding: 0; background: none; border: 0; }
 .daily-plan > .eyebrow { margin-bottom: var(--space-xs); }
+.challenge-trigger { display: inline-flex; align-items: center; gap: var(--space-xs); min-height: 2.25rem; padding: var(--space-2xs) var(--space-sm); margin-left: auto; color: var(--color-ink-2); background: transparent; border: var(--rule-hair) solid var(--color-rule); border-radius: var(--radius-none); cursor: pointer; font-size: var(--text-sm); white-space: nowrap; }
+.challenge-trigger[data-open='true'] { color: var(--color-accent); border-color: var(--color-accent); }
+.challenge-trigger:hover { color: var(--color-accent); border-color: var(--color-rule-2); }
+.challenge-count { display: inline-grid; place-items: center; min-width: 1.25rem; height: 1.25rem; padding-inline: 0.25rem; color: var(--color-accent-ink); background: var(--color-accent); font-family: var(--font-display); font-size: var(--text-xs); font-weight: 700; }
 .daily-plan ol { display: grid; gap: var(--space-sm); padding: 0; margin: var(--space-md) 0 0; list-style: none; }
 .daily-plan li { padding-top: var(--space-lg); border-top: var(--rule-hair) solid var(--color-rule); }
 .daily-plan li strong { color: var(--color-ink); }
 .daily-plan li p { margin: var(--space-2xs) 0; color: var(--color-neutral); font-size: var(--text-sm); }
 .daily-challenge-header { display: flex; justify-content: space-between; gap: var(--space-md); align-items: start; }
 .daily-challenge-actions { display: flex; flex-wrap: wrap; justify-content: end; gap: var(--space-xs); }
-.completed-challenge { padding: var(--space-md); color: var(--color-ink); background: var(--color-paper-3); border: var(--rule-hair) solid var(--color-success) !important; }
-.challenge-status { display: inline-block; margin-left: var(--space-xs); padding: 0.15rem 0.4rem; color: var(--color-accent-ink); background: var(--color-success); border-radius: var(--radius-none); font-size: var(--text-xs); font-weight: 700; }
+/* "Logged" sits on the same monotone mastery ramp as the status chips and the
+   topic map — one screen, one colour language for progress. */
+.completed-challenge { padding: var(--space-md); color: var(--color-ink); background: var(--color-paper-3); border: var(--rule-hair) solid var(--mastery-3) !important; }
+.challenge-status { display: inline-block; margin-left: var(--space-xs); padding: 0.15rem 0.4rem; color: var(--mastery-ink-bright); background: var(--mastery-3); border-radius: var(--radius-none); font-size: var(--text-xs); font-weight: 700; }
 .daily-plan .attempt-form { margin-bottom: 0; }
 .struggling-badge { color: var(--color-error); font-weight: 700; }
 .attempt-notes { margin: var(--space-2xs) 0 0; color: var(--color-neutral); font-size: var(--text-sm); }
@@ -113,11 +174,14 @@ button, input, select, textarea, a { transition: background-color var(--dur-shor
 .badge-difficulty.easy { color: var(--color-success); }
 .badge-difficulty.medium { color: var(--color-warning); }
 .badge-difficulty.hard { color: var(--color-error); }
-.badge-status { color: var(--color-accent-ink); border-color: transparent; }
-.badge-status.status-not_started { color: var(--color-ink-2); background: var(--color-paper-3); }
-.badge-status.status-attempted { background: var(--color-warning); }
-.badge-status.status-solved { background: var(--color-success); }
-.badge-status.status-mastered { background: var(--color-accent); }
+/* Not started → Weak → Mid → Mastered is a ladder, so it gets the same monotone
+   --mastery-* ramp the topic map uses; amber-then-green would read as bad/good
+   and speak the same concept in a second colour language on one screen. */
+.badge-status { border-color: transparent; }
+.badge-status.status-not_started { color: var(--mastery-ink-dim); background: var(--mastery-0); }
+.badge-status.status-attempted { color: var(--mastery-ink-dim); background: var(--mastery-1); }
+.badge-status.status-solved { color: var(--mastery-ink-bright); background: var(--mastery-3); }
+.badge-status.status-mastered { color: var(--mastery-ink-bright); background: var(--mastery-4); }
 .badge-struggling { color: var(--color-accent-ink); background: var(--color-error); border-color: transparent; }
 .badge-row { display: flex; flex-wrap: wrap; gap: var(--space-xs); margin-block: var(--space-md) var(--space-lg); }
 .problem-detail .badge { font-size: var(--text-lg); padding: var(--space-xs) var(--space-md); }
@@ -144,9 +208,9 @@ input:disabled, select:disabled, textarea:disabled, button:disabled { opacity: 0
 .settings article p { margin: 0; color: var(--color-neutral); }
 .settings article button { width: fit-content; }
 
-/* ---- Footer ---- */
-.app-footer { margin-top: var(--space-3xl); padding-top: var(--space-md); border-top: var(--rule-hair) solid var(--color-rule); }
-.app-footer p { max-width: 72ch; margin: 0; color: var(--color-muted); font-size: var(--text-xs); }
+/* The local-first note that used to be the page footer; on a single non-scrolling
+   screen it lives where someone looking for data handling actually goes. */
+.settings-note { max-width: 72ch; margin: 0; color: var(--color-muted); font-size: var(--text-xs); }
 
 .easy { color: var(--color-success); }
 .medium { color: var(--color-warning); }
@@ -162,22 +226,28 @@ a:active { color: var(--color-accent-deep); }
 input:focus-visible, select:focus-visible, textarea:focus-visible { border-color: var(--color-ink-2); outline-color: var(--color-focus); }
 input:invalid, select:invalid, textarea:invalid { border-color: var(--color-error); }
 
+/* The route needs no per-width tuning: the SVG viewBox scales it into whatever
+   box is left over, so a squeezed map shrinks rather than reflowing. */
+
 @media (max-width: 48rem) {
-  .workbench-map.has-panel { grid-template-columns: minmax(0, 1fr); }
+  .workbench-map.has-panel { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) minmax(0, 1fr); }
 }
 
 @media (max-width: 45rem) {
-  main { width: min(100% - var(--space-md), 72rem); margin-block: var(--space-md) var(--space-2xl); }
-  .app-header { margin-bottom: var(--space-lg); }
+  main { width: min(100% - var(--space-md), 72rem); padding-block: var(--space-xs); }
+  .app-header { margin-bottom: var(--space-sm); }
   .section-heading, .daily-challenge-header { align-items: start; flex-direction: column; }
   .workbench-stats { gap: var(--space-md); }
   .catalog-row { grid-template-columns: 2.25rem minmax(0, 1fr); padding: var(--space-md); }
   .problem-meta { grid-column: 2; justify-items: start; grid-auto-flow: column; justify-content: start; gap: var(--space-sm); }
   .daily-challenge-actions { justify-content: start; }
-  .daily-plan, .attempt-form, .settings article, .topic-map, .topic-panel { padding: var(--space-lg); }
+  .attempt-form, .settings article, .topic-map, .topic-panel { padding: var(--space-md); }
   .settings-overlay-panel { padding: var(--space-lg); }
 }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 150ms !important; animation-iteration-count: 1 !important; transition-duration: 150ms !important; }
+  /* The cleared-topic halo is decorative and loops, so it stops entirely rather
+     than being clamped to one fast pulse. */
+  .path-node.complete .path-node-track { animation: none; opacity: 1; }
 }

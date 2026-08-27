@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
+import { BadgeShelf } from './components/BadgeShelf';
+import { GamificationBar } from './components/GamificationBar';
 import { SettingsOverlay } from './components/SettingsOverlay';
 import { Workbench } from './components/Workbench';
 import { db } from './db/database';
@@ -34,9 +36,10 @@ export default function App() {
   return <main>
     <header className="app-header">
       <div className="app-intro">
-        <p className="eyebrow">LeetCode Tracker / local training system</p>
         <h1>LeetCode Tracker</h1>
       </div>
+      {gamification && <GamificationBar snapshot={gamification} />}
+      {gamification && <BadgeShelf earned={gamification.badges} />}
       <button type="button" className="settings-toggle" onClick={() => setSettingsOpen(true)}>Settings</button>
     </header>
     <Workbench
@@ -45,12 +48,10 @@ export default function App() {
       progress={progress}
       progressByProblem={progressByProblem}
       settings={settings}
-      gamification={gamification}
       planItems={plan ?? []}
       completedProblemIds={completedProblemIds}
       onSkip={(item) => skipRecommendation(item.problem.id, item.kind)}
     />
-    <footer className="app-footer"><p>LeetCode Tracker is local-first. Your practice history stays in this browser.</p></footer>
     {settingsOpen && <SettingsOverlay onClose={() => setSettingsOpen(false)} />}
   </main>;
 }

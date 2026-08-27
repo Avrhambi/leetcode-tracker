@@ -4,9 +4,10 @@
    single short pass; the level-up pulse additionally gets its own no-op below. */
 
 /* --- XP / level strip --------------------------------------------------------- */
-.xp-bar { padding: var(--space-md) var(--space-lg); margin-bottom: var(--space-sm); color: var(--color-ink); background: var(--color-paper-2); border: var(--rule-hair) solid var(--color-rule); }
-.xp-bar-topline { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-sm); margin-bottom: var(--space-sm); font-size: var(--text-xs); }
-.xp-bar-topline strong { color: var(--color-accent); font-family: var(--font-display); font-size: var(--text-lg); line-height: 1; }
+/* Lives in the app header, so it is a slim inline strip rather than a card. */
+.xp-bar { padding: var(--space-2xs) var(--space-sm); color: var(--color-ink); background: var(--color-paper-2); border: var(--rule-hair) solid var(--color-rule); }
+.xp-bar-topline { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-sm); margin-bottom: var(--space-2xs); font-size: var(--text-2xs); }
+.xp-bar-topline strong { color: var(--color-accent); font-family: var(--font-display); font-size: var(--text-base); line-height: 1; }
 .xp-bar-topline span { color: var(--color-neutral); }
 .xp-track { position: relative; height: 0.45rem; overflow: hidden; background: var(--color-rule); }
 .xp-fill { height: 100%; background: var(--color-accent); transition: width var(--dur-medium) var(--ease-out); }
@@ -26,18 +27,17 @@
   100% { transform: translateX(100%); opacity: 0; }
 }
 
-/* --- Badge shelf (milestone badges; distinct from the catalog .badge chips) --- */
-.badge-shelf { padding: var(--space-lg); margin-bottom: var(--space-sm); background: var(--color-paper-2); border: var(--rule-hair) solid var(--color-rule); }
-.badge-shelf > .eyebrow { margin-bottom: var(--space-md); }
-.badge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); gap: var(--space-sm); padding: 0; margin: 0; list-style: none; }
-.milestone { display: grid; grid-template-columns: 1.5rem 1fr; align-items: start; gap: var(--space-2xs) var(--space-sm); padding: var(--space-sm); background: var(--color-paper); border: var(--rule-hair) solid var(--color-rule); }
-.milestone.locked { opacity: 0.4; }
+/* --- Badge strip (milestone badges; distinct from the catalog .badge chips) ---
+   A row of marks in the app header. Each badge's label and hint ride along in the
+   tooltip and the SVG's accessible name, since there is no room for cards. An
+   earned mark is filled; a locked one is a dim outline. */
+.badge-strip { display: flex; align-items: center; gap: var(--space-2xs); padding: var(--space-2xs) var(--space-xs); margin: 0; list-style: none; border: var(--rule-hair) solid var(--color-rule); }
+.milestone { display: grid; place-items: center; }
+.milestone.locked { opacity: 0.45; }
 .milestone.earned.fresh { animation: badge-reveal 600ms var(--ease-out) 1; }
-.milestone-mark { grid-row: span 2; width: 1.5rem; height: 1.5rem; }
-.milestone-mark polygon, .milestone-mark circle, .milestone-mark rect { fill: none; stroke: var(--color-accent); stroke-width: 6; }
-.milestone.locked .milestone-mark polygon, .milestone.locked .milestone-mark circle, .milestone.locked .milestone-mark rect { stroke: var(--color-rule-2); }
-.milestone b { color: var(--color-ink); font-family: var(--font-body); font-size: var(--text-xs); }
-.milestone span { color: var(--color-neutral); font-size: var(--text-2xs); line-height: 1.3; }
+.milestone-mark { display: block; width: 1.25rem; height: 1.25rem; }
+.milestone-mark polygon, .milestone-mark circle, .milestone-mark rect { fill: var(--color-accent); stroke: var(--color-accent); stroke-width: 6; }
+.milestone.locked .milestone-mark polygon, .milestone.locked .milestone-mark circle, .milestone.locked .milestone-mark rect { fill: none; stroke: var(--color-rule-2); }
 
 @keyframes badge-reveal {
   0% { transform: translateY(0.5rem); opacity: 0; }

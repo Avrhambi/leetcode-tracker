@@ -17,6 +17,18 @@
   --color-focus: oklch(88% 0.18 100);
   --color-rule: oklch(42% 0.04 150);
   --color-rule-2: oklch(53% 0.045 150);
+  /* Mastery ramp: five rungs from untouched to mastered, monotone within the
+     phosphor family so it reads as one ladder rather than good/bad. Error red is
+     deliberately NOT on this scale — it stays reserved for `struggling`, which
+     must remain distinguishable from every mastery level. */
+  --mastery-0: oklch(24% 0.02 150);
+  --mastery-1: oklch(38% 0.06 148);
+  --mastery-2: oklch(53% 0.11 147);
+  --mastery-3: oklch(68% 0.15 146);
+  --mastery-4: oklch(84% 0.19 145);
+  /* Readable text on each rung: light ink on the dark rungs, dark on the bright. */
+  --mastery-ink-dim: oklch(90% 0.02 145);
+  --mastery-ink-bright: oklch(16% 0.02 155);
   --color-success: oklch(78% 0.15 145);
   --color-warning: oklch(82% 0.16 85);
   --color-error: oklch(70% 0.2 25);

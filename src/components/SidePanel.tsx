@@ -1,11 +1,14 @@
 import type { CatalogProblem, ProgressStatus } from '../types/models';
-import { ProblemDetail } from './ProblemDetail';
+import { STATUS_HINTS, STATUS_LABELS } from '../services/statusLabels';
 
-// The panel opened beside the topic map. Three modes:
-//  - topic:  the problems of one topic (from a map node)
-//  - search: problems matching the workbench search box
-//  - problem: one problem's full detail (attempt form + history), reached from
-//    either list via a Back button. The map stays visible alongside throughout.
+// The panel opened beside the topic map, and the full-screen problem view.
+//
+//  - topic:  the problems of one topic (from a map node) — side panel
+//  - search: problems matching the workbench search box — side panel
+//  - problem: one problem's detail (attempt form + history), reached from either
+//    list. This one is NOT a side panel: `Workbench` renders it full-bleed in
+//    place of the map, so working on a problem gets the whole screen. `back`
+//    carries the list it was opened from, which the Back button returns to.
 export type Panel =
   | { kind: 'topic'; topic: string }
   | { kind: 'search'; query: string }
@@ -16,7 +19,6 @@ interface SidePanelProps {
   problems: CatalogProblem[];
   progressByProblem: Map<string, ProgressStatus>;
   onSelectProblem: (problem: CatalogProblem, back: Panel) => void;
-  onBack: (target: Panel) => void;
   onClose: () => void;
 }
 
@@ -34,19 +36,14 @@ function ProblemRow({ problem, status, showTopic, onSelect }: {
     </div>
     <div className="problem-meta">
       <span className={`badge badge-difficulty ${problem.difficulty}`}>{problem.difficulty}</span>
-      <span className={`badge badge-status status-${status}`}>{status.replaceAll('_', ' ')}</span>
+      <span className={`badge badge-status status-${status}`} title={STATUS_HINTS[status]}>{STATUS_LABELS[status]}</span>
     </div>
   </li>;
 }
 
-export function SidePanel({ panel, problems, progressByProblem, onSelectProblem, onBack, onClose }: SidePanelProps) {
-  if (panel.kind === 'problem') {
-    return <aside className="topic-panel" aria-label={`${panel.problem.title} detail`}>
-      <div className="topic-panel-detail">
-        <ProblemDetail problem={panel.problem} onBack={() => onBack(panel.back)} />
-      </div>
-    </aside>;
-  }
+export function SidePanel({ panel, problems, progressByProblem, onSelectProblem, onClose }: SidePanelProps) {
+  // `problem` never reaches here — Workbench renders it full-screen instead.
+  if (panel.kind === 'problem') return null;
 
   const statusOf = (problem: CatalogProblem) => progressByProblem.get(problem.id) ?? 'not_started';
 

@@ -32,7 +32,10 @@ Do not add a dependency without asking first, and explain why existing code can'
 - `src/services/` — pure, **deterministic, unit-tested** rules. No I/O. `reviews.ts`
   (quality + review stage), `dailyPlan.ts` (adaptive plan selection), `mastery.ts`,
   `streak.ts` (grace days), `gamification.ts` (XP/levels), `badges.ts`,
-  `attemptForm.ts` (outcome→field rules), `constants.ts` (every threshold and curve).
+  `attemptForm.ts` (outcome→field rules), `constants.ts` (every threshold and curve),
+  `topicPath.ts` (topic-map route geometry — pure, so placement is deterministic),
+  `statusLabels.ts` (display-only names for the stored `ProgressStatus` enum — the
+  enum itself is persisted and must not be renamed; see `docs/SPEC.md`).
 - `src/db/` — **direct Dexie calls only**, no repository/adapter/factory/queue/cache/retry.
   `database.ts` holds the versioned schema + migrations; `saveAttempt.ts` writes attempt +
   progress + recommendation completion + XP + badges in **one transaction**; `backup.ts`
@@ -43,7 +46,8 @@ Do not add a dependency without asking first, and explain why existing code can'
   tier. The `[INEFFECTIVE_DYNAMIC_IMPORT]` build warning for `catalog.ts` is known and benign.
 - `src/hooks/` — `useDailyPlan.ts`, `useGamification.ts` (thin `useLiveQuery` wrappers).
 - `src/components/` — one file per screen/panel. Plain React, no state library beyond
-  Dexie's `useLiveQuery`.
+  Dexie's `useLiveQuery`. `Overlay.tsx` is the single modal shell (Settings and the
+  daily challenge both use it) — don't write a second one.
 - `src/styles/` — `../../tokens.css` (oklch dark "phosphor green" design tokens),
   `global.css`, `gamification.css` (`@import`ed from `global.css`). Plain CSS.
 - `docs/` — `SPEC.md` (behaviour spec), `SCHEMA.md` (data model), `MILESTONES.md`,
@@ -66,6 +70,14 @@ Do not add a dependency without asking first, and explain why existing code can'
 - **All recommendation and review rules are deterministic and unit-tested.** No
   wall-clock reads inside the pure functions — dates are passed in as `YYYY-MM-DD` local
   strings.
+- **The page never scrolls.** The shell is a fixed `100dvh` grid with `overflow:
+  hidden` on `html`/`body`; anything that can grow scrolls inside its own box (the
+  side panel, the full-screen problem view, a modal body). The topic map instead
+  *scales*: it is an SVG on a fixed viewBox, so it fits any box by construction and
+  needs no per-width tuning. Verify layout changes in a browser — `npm run verify`
+  cannot see overflow, and "the page doesn't scroll" can pass while content is
+  crushed, overlapping, or (for the map) scaled into illegibility. See `docs/QA.md`,
+  "Responsive and production", for the assertions that actually discriminate.
 - **All animation sits behind `prefers-reduced-motion`.** The global rule in `global.css`
   clamps durations; showy gamification animations additionally get `animation: none`.
 
