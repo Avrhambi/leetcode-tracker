@@ -1,4 +1,4 @@
-# PatternPilot
+# leetcode-tracker
 
 A local-first study coach for the NeetCode 150. It turns "grind LeetCode until
 something sticks" into a directed, adaptive practice loop.
@@ -35,8 +35,7 @@ effort, and no feedback loop to correct course.
 
 ## The solution
 
-PatternPilot wraps the NeetCode 150 in a coaching loop that reacts to your
-results.
+This wraps the NeetCode 150 in a coaching loop that reacts to your results.
 
 **A daily plan, not a list.** Each day you get two to four problems: at least one
 new one, plus reviews that are actually due. New problems are chosen by a
@@ -60,10 +59,13 @@ daily, and its topic stops flooding your plan with new problems from the area
 you're stuck on — while still not unlocking that topic's *harder* problems until
 you've genuinely made progress.
 
-**Progress you can see.** XP and levels for every attempt, milestone badges, a
-per-topic mastery constellation, a streak with a grace day for the day you miss,
-and a short "needs a different approach" list of the problems you're currently
-stuck on.
+**Progress you can see.** The whole app is one screen that never scrolls. Its
+centrepiece is a quest path — a winding trail through all 18 topics, lit behind
+you and dim ahead, where each stop's ring fills as you master it and a cleared
+topic earns a star. Alongside it: XP and levels for every attempt, milestone
+badges, and a streak with a grace day for the day you miss. A topic you're stuck
+on is marked in red, off the mastery scale entirely, so "needs a different
+approach" can never be mistaken for progress.
 
 Everything runs in the browser. Your data lives in IndexedDB — no account, no
 server, no network calls — and you can export or import it as a single JSON file.
@@ -81,5 +83,13 @@ plain CSS. The 150-problem catalog is bundled — first launch seeds it and you'
 ready to go.
 
 See [`docs/`](docs/) for the full specification (`SPEC.md`), data model
-(`SCHEMA.md`), and the design rationale behind the adaptive algorithm
-(`design/algorithm.md`).
+(`SCHEMA.md`), manual test cases (`QA.md`), and the design rationale behind the
+adaptive algorithm (`algorithm.md`).
+
+## Contributors
+
+[![Contributors](https://contrib.rocks/image?repo=Avrhambi/leetcode-tracker)](https://github.com/Avrhambi/leetcode-tracker/graphs/contributors)
+
+Built by [@Avrhambi](https://github.com/Avrhambi), paired with
+[Claude Code](https://claude.com/claude-code) — see the `Co-Authored-By` trailers
+in the commit history.

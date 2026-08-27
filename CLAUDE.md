@@ -51,7 +51,7 @@ Do not add a dependency without asking first, and explain why existing code can'
 - `src/styles/` — `../../tokens.css` (oklch dark "phosphor green" design tokens),
   `global.css`, `gamification.css` (`@import`ed from `global.css`). Plain CSS.
 - `docs/` — `SPEC.md` (behaviour spec), `SCHEMA.md` (data model), `MILESTONES.md`,
-  `QA.md` (manual test cases), `design/algorithm.md` (the adaptive coach + gamification
+  `QA.md` (manual test cases), `algorithm.md` (the adaptive coach + gamification
   algorithm in full). Keep these in sync with behaviour changes.
 
 ## Architecture invariants
