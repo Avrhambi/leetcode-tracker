@@ -38,7 +38,7 @@
 - Record a strong first attempt of the day: the dashboard XP strip rises by 20 without a reload.
 - Record a second attempt for the same problem the same day: XP rises by 5 (the reinforcement quarter), not 20.
 - Reload the page: the level and XP are unchanged.
-- With the OS set to reduced motion, confirm the XP fill bar jumps rather than sliding.
+- With the OS set to reduced motion, confirm the XP fill bar's slide is clamped to a brief 150 ms rather than a longer ease.
 - Open an app that was on a pre-gamification (coach-fixes) build with existing attempts: on first load the XP strip shows a non-zero total replayed from the attempt history.
 
 ## Problems and links
