@@ -1,5 +1,6 @@
 import Dexie, { type EntityTable } from 'dexie';
-import type { AppSetting, Attempt, CatalogProblem, ProblemProgress, RecommendationEvent } from '../types/models';
+import type { AppSetting, Attempt, CatalogProblem, GamificationState, ProblemProgress, RecommendationEvent } from '../types/models';
+import { replayXp } from '../services/gamification';
 
 export const db = new Dexie('pattern-pilot') as Dexie & {
   problems: EntityTable<CatalogProblem, 'id'>;
@@ -7,6 +8,7 @@ export const db = new Dexie('pattern-pilot') as Dexie & {
   attempts: EntityTable<Attempt, 'id'>;
   recommendationEvents: EntityTable<RecommendationEvent, 'id'>;
   settings: EntityTable<AppSetting, 'key'>;
+  gamification: EntityTable<GamificationState, 'key'>;
 };
 
 const stores = {
@@ -16,6 +18,8 @@ const stores = {
   recommendationEvents: '&id, problemId, kind, recommendedAt, skippedUntil',
   settings: '&key'
 };
+
+const storesV3 = { ...stores, gamification: '&key' };
 
 db.version(1).stores(stores);
 
@@ -31,5 +35,21 @@ db.version(2).stores(stores).upgrade(async (tx) => {
   await tx.table<ProblemProgress>('progress').toCollection().modify((row) => {
     if (typeof row.consecutiveWeak !== 'number') row.consecutiveWeak = 0;
     if (typeof row.struggling !== 'boolean') row.struggling = false;
+  });
+});
+
+// v3: adds the single-row `gamification` store and seeds it by replaying lifetime
+// XP from the full `attempts` history, so a returning user is not level 0.
+//
+// This must be its own version — Dexie never re-runs a `version(2)` upgrade for a
+// user who already opened a v2 build, so the replay could not live there. A fresh
+// install is created directly at v3 and skips this callback entirely, hence the
+// gamification reader defaults to `{ xp: 0 }` when the row is absent.
+db.version(3).stores(storesV3).upgrade(async (tx) => {
+  const attempts = await tx.table<Attempt>('attempts').toArray();
+  await tx.table<GamificationState>('gamification').put({
+    key: 'state',
+    xp: replayXp(attempts),
+    updatedAt: new Date().toISOString()
   });
 });

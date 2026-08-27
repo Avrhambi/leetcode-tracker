@@ -141,15 +141,17 @@ v1 restore does not break the streak.
 ```ts
 interface GamificationState {
   key: 'state';
-  xp: number;                 // total lifetime XP
-  level: number;              // derived but cached for cheap reads
-  badges: string[];           // earned badge ids
-  streakGraceRemaining: number;
-  streakGraceRefreshedOn: string; // YYYY-MM-DD
-  lastActiveOn: string | null;    // YYYY-MM-DD
+  xp: number;        // total lifetime XP — the only persisted field
   updatedAt: string;
 }
 ```
+
+As built (engine slice): level is **derived on read**, not cached, so it can
+never drift from `xp`. Badges are deferred to the visuals slice and will be
+stored as a `badges: string[]` field then. Streak-with-grace state is **not**
+here — it lives in `settings` and is not written back (see "Streak with grace
+days" below); folding it into this row would reintroduce the write-loop hazard
+that decision avoids.
 
 **Dexie migrations:**
 - `db.version(2)...upgrade()` — backfills `consecutiveWeak: 0`, `struggling: false`
@@ -224,9 +226,16 @@ out-of-order backdating, which a stored "last advance date" is not.
   The rows stay reserved for a future grant-cadence change.
 
 **XP + levels** (`src/services/gamification.ts`, pure):
-- `xpForAttempt(quality, kind, isFirstOfDay)` → e.g. strong 20 / partial 12 /
-  weak 5; review ×1.0, new ×1.25; second-same-day pass ×0.25.
-- `levelForXp(xp)` → gentle curve, e.g. `level = floor(sqrt(xp / 50))`.
+- `xpForAttempt(quality, isFirstOfDay)` → strong 20 / partial 12 / weak 5, times
+  0.25 (rounded) for a same-day repeat. **No new-vs-review multiplier** as built:
+  `kind` lives on `RecommendationEvent`, not `Attempt`, and a catalog attempt
+  with no open recommendation has none — the v3 replay reads `attempts` and could
+  not reconstruct it, so live-award and replay would disagree. Both remaining
+  inputs (`quality`, first-of-day) are reconstructible from a stored attempt row.
+- `levelForXp(xp)` → `level = floor(sqrt(xp / 50))`.
+- `replayXp(attempts)` → folds the full history (sorted by `createdAt` then `id`)
+  and is shared by the v3 upgrade and by backup restore of a pre-gamification
+  payload; unit-tested to agree with an incremental live-award fold.
 - `badgesEarned(state, progress, attempts)` → pure check of badge predicates
   (first mastered problem, a topic fully mastered, 7-day streak, 30-day streak,
   100 problems attempted, a full tier mastered, …). Returns ids; caller diffs
