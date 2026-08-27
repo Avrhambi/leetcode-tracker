@@ -13,3 +13,6 @@ npm-debug.log*
 Thumbs.db
 .vscode/
 .idea/
+
+# Claude Code — commit settings.json (shared hooks), keep local overrides out
+.claude/settings.local.json
