@@ -138,8 +138,8 @@ Let `d` = the number of problems whose `nextReviewDate` is today or earlier
 
 Due reviews are ordered by weakest `lastQuality` first (`weak` < `partial` <
 `strong`), then earliest `nextReviewDate`, then `neetcodeOrder`. Reviews beyond
-the review slots wait for a later day and are counted in the dashboard's
-"Due reviews" figure.
+the review slots wait for a later day and are counted in the workbench's
+"due reviews" figure.
 
 ### 5.2 New-problem selection
 
@@ -331,9 +331,9 @@ additionally get an explicit `animation: none` in
 The XP fill-bar width transition still runs (clamped).
 
 The level-up pulse is triggered by comparing the current level to a `useRef` of
-the previous level while the dashboard is mounted. A level-up that happens while
-the user is on another screen is not replayed — nothing stores what was last
-announced.
+the previous level while the XP strip is mounted. A level-up that lands while the
+strip is unmounted (the Settings overlay is open) is not replayed — nothing
+stores what was last announced.
 
 ## 11. Known limitations
 
@@ -345,4 +345,4 @@ announced.
 - **The grace allowance is effectively fixed at 1** and unobservable as a
   spent-down balance (§8) until a grant-cadence change uses the reserved
   `settings` rows.
-- **Level-up while off the dashboard is silent** (§10).
+- **Level-up while the XP strip is unmounted is silent** (§10).
