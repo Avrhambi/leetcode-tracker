@@ -1,5 +1,5 @@
 // Curriculum weighting for daily-plan topic selection. Keyed by `primaryTopic`
-// so it needs no schema change or catalog reseed (see plan/SPEC.md, "Daily plan").
+// so it needs no schema change or catalog reseed (see docs/SPEC.md, "Daily plan").
 // Tier 1 = common foundations, tier 2 = core intermediate, tier 3 = niche/advanced.
 export type TopicTier = 1 | 2 | 3;
 

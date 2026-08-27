@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { DailyPlanItem } from '../domain/dailyPlan';
+import type { DailyPlanItem } from '../services/dailyPlan';
 import { AttemptForm } from './AttemptForm';
 
 interface DailyPlanProps {

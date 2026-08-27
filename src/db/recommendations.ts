@@ -1,5 +1,5 @@
 import { db } from './database';
-import type { DailyPlanItem } from '../domain/dailyPlan';
+import type { DailyPlanItem } from '../services/dailyPlan';
 
 export async function persistRecommendations(items: DailyPlanItem[], now = new Date()): Promise<void> {
   const recommendedAt = now.toISOString();
