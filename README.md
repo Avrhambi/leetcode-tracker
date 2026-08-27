@@ -86,10 +86,3 @@ See [`docs/`](docs/) for the full specification (`SPEC.md`), data model
 (`SCHEMA.md`), manual test cases (`QA.md`), and the design rationale behind the
 adaptive algorithm (`algorithm.md`).
 
-## Contributors
-
-[![Contributors](https://contrib.rocks/image?repo=Avrhambi/leetcode-tracker)](https://github.com/Avrhambi/leetcode-tracker/graphs/contributors)
-
-Built by [@Avrhambi](https://github.com/Avrhambi), paired with
-[Claude Code](https://claude.com/claude-code) — see the `Co-Authored-By` trailers
-in the commit history.
