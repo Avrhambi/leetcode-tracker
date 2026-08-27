@@ -17,7 +17,7 @@ export interface AppSetting { key: AppSettingKey; value: string; }
 // derived on read (see services/gamification.ts) so it can never drift from xp.
 // `badges` is optional for back-compat: a PR-5a-era row has none and reads as [].
 // Streak-with-grace state is NOT here: it lives in `settings` and is currently
-// not written back (see docs/design/algorithm.md).
+// not written back (see docs/algorithm.md).
 export interface GamificationState { key: 'state'; xp: number; badges?: string[]; updatedAt: string; }
 
 export interface BackupPayload { formatVersion: 1 | 2; exportedAt: string; progress: ProblemProgress[]; attempts: Attempt[]; recommendationEvents: RecommendationEvent[]; settings: AppSetting[]; gamification?: GamificationState; }

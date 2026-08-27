@@ -1,0 +1,15 @@
+# Canonicalises names in `git shortlog -sne`, `git log --use-mailmap`, and most
+# git-based contribution tools.
+#
+# The human author has committed under two spellings; Claude has co-authored
+# under one per model version ("Claude Sonnet 5", "Claude Opus 4.8", …), which
+# would otherwise read as four separate contributors.
+#
+# Note this does NOT change github.com's own contributors graph — that matches
+# on the commit email against a registered GitHub account, and
+# noreply@anthropic.com belongs to no account. See README, "Contributors".
+
+Avrham <avrham9111@gmail.com> <avrham9111@gmail.com>
+Avrham <avrham9111@gmail.com> Avraham Bicha <avrham9111@gmail.com>
+
+Claude <noreply@anthropic.com> <noreply@anthropic.com>
