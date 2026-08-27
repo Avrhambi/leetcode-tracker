@@ -50,7 +50,7 @@ Read: `AGENTS.md`, `SPEC.md`, `SCHEMA.md`, `design/adaptive-coach-and-gamificati
 Read: `AGENTS.md`, `SPEC.md`, `SCHEMA.md`, `design/adaptive-coach-and-gamification.md`
 - [x] XP and levels as pure rules with unit tests; Dexie `version(3)` store + XP replay shared with backup restore.
 - [x] Dashboard XP/level strip.
-- [ ] Badges as pure rules with unit tests; badge shelf.
-- [ ] Topic-mastery visual, needs-attention list.
-- [ ] CSS/SVG geometry animation behind `prefers-reduced-motion`.
-- [x] Run `npm run verify` (engine slice).
+- [x] Badges as pure rules with unit tests (monotonic union, no replay); badge shelf.
+- [x] Topic constellation (static SVG), needs-attention list.
+- [x] CSS/SVG geometry animation (level-up pulse, badge reveal) behind `prefers-reduced-motion`.
+- [x] Run `npm run verify`.

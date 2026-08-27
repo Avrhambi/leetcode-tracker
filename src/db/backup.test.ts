@@ -27,13 +27,18 @@ describe('validateBackupPayload', () => {
     expect(validateBackupPayload(v2Backup)).toEqual(v2Backup);
     expect('gamification' in validateBackupPayload(v2Backup)).toBe(false);
   });
-  it('accepts a v2 backup with a well-formed gamification row', () => {
+  it('accepts a v2 backup with a well-formed gamification row (no badges)', () => {
     const withXp = { ...v2Backup, gamification: { key: 'state', xp: 340, updatedAt: '2026-08-01T00:00:00.000Z' } };
     expect(validateBackupPayload(withXp)).toEqual(withXp);
+  });
+  it('accepts a gamification row that carries a badges array', () => {
+    const withBadges = { ...v2Backup, gamification: { key: 'state', xp: 340, badges: ['first-solve', 'century'], updatedAt: '2026-08-01T00:00:00.000Z' } };
+    expect(validateBackupPayload(withBadges)).toEqual(withBadges);
   });
   it('rejects a malformed gamification row', () => {
     expect(() => validateBackupPayload({ ...v2Backup, gamification: { key: 'state', xp: -1, updatedAt: 'x' } })).toThrow('valid LeetCode Tracker backup');
     expect(() => validateBackupPayload({ ...v2Backup, gamification: { key: 'wrong', xp: 10, updatedAt: 'x' } })).toThrow('valid LeetCode Tracker backup');
+    expect(() => validateBackupPayload({ ...v2Backup, gamification: { key: 'state', xp: 10, badges: [1, 2], updatedAt: 'x' } })).toThrow('valid LeetCode Tracker backup');
   });
   it('rejects invalid nested user data before restore', () => {
     expect(() => validateBackupPayload({ ...v1Backup, attempts: [{ id: 'a' }] })).toThrow('valid LeetCode Tracker backup');

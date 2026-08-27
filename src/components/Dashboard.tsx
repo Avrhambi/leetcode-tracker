@@ -1,7 +1,11 @@
 import { STREAK_GRACE_PER_WEEK } from '../services/constants';
 import { currentStreak, type StreakGraceState } from '../services/streak';
-import type { GamificationSnapshot } from '../services/gamification';
+import { masteryByTopic } from '../services/mastery';
+import type { GamificationView } from '../hooks/useGamification';
 import { GamificationBar } from './GamificationBar';
+import { BadgeShelf } from './BadgeShelf';
+import { TopicConstellation } from './TopicConstellation';
+import { NeedsAttention } from './NeedsAttention';
 import type { AppSetting, Attempt, CatalogProblem, ProblemProgress } from '../types/models';
 
 interface DashboardProps {
@@ -9,7 +13,8 @@ interface DashboardProps {
   problems: CatalogProblem[];
   progress: ProblemProgress[];
   settings: AppSetting[];
-  gamification: GamificationSnapshot | undefined;
+  gamification: GamificationView | undefined;
+  onSelectProblem: (problem: CatalogProblem) => void;
 }
 
 function localDate(date = new Date()): string {
@@ -33,7 +38,7 @@ function graceStateFrom(settings: AppSetting[]): StreakGraceState {
   };
 }
 
-export function Dashboard({ attempts, problems, progress, settings, gamification }: DashboardProps) {
+export function Dashboard({ attempts, problems, progress, settings, gamification, onSelectProblem }: DashboardProps) {
   const today = localDate();
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
@@ -48,6 +53,9 @@ export function Dashboard({ attempts, problems, progress, settings, gamification
   return <section className="dashboard" aria-labelledby="dashboard-heading">
     <div className="section-heading"><div><p className="eyebrow">Overview</p><h2 id="dashboard-heading">Dashboard</h2></div></div>
     {gamification && <GamificationBar snapshot={gamification} />}
+    {gamification && <BadgeShelf earned={gamification.badges} />}
+    <TopicConstellation cells={masteryByTopic(problems, progress)} />
+    <NeedsAttention problems={problems} progress={progress} onSelect={onSelectProblem} />
     <div className="metric-grid">
       <article><strong>{streak}</strong><span>Current streak{graceDaysUsed > 0 && <> · <span className="grace-note">{graceDaysUsed} grace {graceDaysUsed === 1 ? 'day' : 'days'} used</span></>}</span></article>
       <article><strong>{attempts.filter((attempt) => attempt.attemptedOn >= weekStart && attempt.attemptedOn <= today).length}</strong><span>Attempts in 7 days</span></article>

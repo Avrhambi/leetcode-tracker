@@ -1,0 +1,71 @@
+/* Gamification surface: XP strip, badge shelf, topic constellation, needs-attention.
+   Geometry motifs on the phosphor palette. All motion is restrained and the
+   global `prefers-reduced-motion` rule in global.css clamps every animation to a
+   single short pass; the level-up pulse additionally gets its own no-op below. */
+
+/* --- XP / level strip --------------------------------------------------------- */
+.xp-bar { padding: var(--space-md) var(--space-lg); margin-bottom: var(--space-sm); color: var(--color-ink); background: var(--color-paper-2); border: var(--rule-hair) solid var(--color-rule); }
+.xp-bar-topline { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-sm); margin-bottom: var(--space-sm); font-size: var(--text-xs); }
+.xp-bar-topline strong { color: var(--color-accent); font-family: var(--font-display); font-size: var(--text-lg); line-height: 1; }
+.xp-bar-topline span { color: var(--color-neutral); }
+.xp-track { position: relative; height: 0.45rem; overflow: hidden; background: var(--color-rule); }
+.xp-fill { height: 100%; background: var(--color-accent); transition: width var(--dur-medium) var(--ease-out); }
+
+/* Level-up: a single soft pulse of the level number and a sweep across the track. */
+.xp-bar[data-leveled='true'] .xp-bar-topline strong { animation: xp-level-pulse 900ms var(--ease-out) 1; }
+.xp-bar[data-leveled='true'] .xp-track::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, var(--color-accent), transparent); animation: xp-sweep 900ms var(--ease-out) 1; }
+
+@keyframes xp-level-pulse {
+  0% { transform: scale(1); text-shadow: none; }
+  35% { transform: scale(1.12); text-shadow: 0 0 0.5rem var(--color-accent); }
+  100% { transform: scale(1); text-shadow: none; }
+}
+@keyframes xp-sweep {
+  0% { transform: translateX(-100%); opacity: 0; }
+  50% { opacity: 0.6; }
+  100% { transform: translateX(100%); opacity: 0; }
+}
+
+/* --- Badge shelf (milestone badges; distinct from the catalog .badge chips) --- */
+.badge-shelf { padding: var(--space-lg); margin-bottom: var(--space-sm); background: var(--color-paper-2); border: var(--rule-hair) solid var(--color-rule); }
+.badge-shelf > .eyebrow { margin-bottom: var(--space-md); }
+.badge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); gap: var(--space-sm); padding: 0; margin: 0; list-style: none; }
+.milestone { display: grid; grid-template-columns: 1.5rem 1fr; align-items: start; gap: var(--space-2xs) var(--space-sm); padding: var(--space-sm); background: var(--color-paper); border: var(--rule-hair) solid var(--color-rule); }
+.milestone.locked { opacity: 0.4; }
+.milestone.earned.fresh { animation: badge-reveal 600ms var(--ease-out) 1; }
+.milestone-mark { grid-row: span 2; width: 1.5rem; height: 1.5rem; }
+.milestone-mark polygon, .milestone-mark circle, .milestone-mark rect { fill: none; stroke: var(--color-accent); stroke-width: 6; }
+.milestone.locked .milestone-mark polygon, .milestone.locked .milestone-mark circle, .milestone.locked .milestone-mark rect { stroke: var(--color-rule-2); }
+.milestone b { color: var(--color-ink); font-family: var(--font-body); font-size: var(--text-xs); }
+.milestone span { color: var(--color-neutral); font-size: var(--text-2xs); line-height: 1.3; }
+
+@keyframes badge-reveal {
+  0% { transform: translateY(0.5rem); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+/* --- Topic constellation --------------------------------------------------- */
+.constellation { padding: var(--space-lg); margin-bottom: var(--space-sm); background: var(--color-paper-2); border: var(--rule-hair) solid var(--color-rule); }
+.constellation > .eyebrow { margin-bottom: var(--space-md); }
+.constellation svg { display: block; width: 100%; height: auto; overflow: visible; }
+.constellation-edge { stroke: var(--color-rule); stroke-width: 1; }
+.constellation-node { fill: var(--color-paper-3); stroke: var(--color-rule-2); stroke-width: 1.5; }
+.constellation-node.filled { fill: var(--color-accent); stroke: var(--color-accent); }
+.constellation-label { fill: var(--color-neutral); font-family: var(--font-body); font-size: 9px; }
+
+/* --- Needs attention ------------------------------------------------------- */
+.needs-attention { padding: var(--space-lg); margin-bottom: var(--space-sm); background: var(--color-paper-2); border: var(--rule-hair) solid var(--color-rule); border-left: 3px solid var(--color-warning); }
+.needs-attention > .eyebrow { margin-bottom: var(--space-sm); }
+.needs-attention ul { display: grid; gap: var(--space-xs); padding: 0; margin: 0; list-style: none; }
+.needs-attention li { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-sm); padding: var(--space-xs) 0; border-top: var(--rule-hair) solid var(--color-rule); font-size: var(--text-sm); }
+.needs-attention li:first-child { border-top: 0; }
+.needs-attention .weak-run { color: var(--color-warning); font-family: var(--font-body); font-size: var(--text-xs); }
+.needs-attention .all-clear { color: var(--color-neutral); font-size: var(--text-sm); }
+
+@media (prefers-reduced-motion: reduce) {
+  /* The XP fill still animates (clamped to 150ms by the global rule); the level-up
+     pulse and sweep are showier, so make them a true no-op here. */
+  .xp-bar[data-leveled='true'] .xp-bar-topline strong { animation: none; }
+  .xp-bar[data-leveled='true'] .xp-track::after { animation: none; content: none; }
+  .milestone.earned.fresh { animation: none; }
+}

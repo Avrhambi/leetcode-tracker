@@ -32,3 +32,23 @@ export const XP_REPEAT_SAME_DAY_MULTIPLIER = 0.25;
 // Level curve: gentle square-root growth. level = floor(sqrt(xp / XP_PER_LEVEL_UNIT)),
 // so level 1 at 50 XP, level 2 at 200, level 3 at 450, level 4 at 800.
 export const XP_PER_LEVEL_UNIT = 50;
+
+// Milestone badges. Every predicate is a pure check of progress + attempts +
+// catalog; the earned set is stored as a monotonic union so a later weak attempt
+// (which resets a review stage) can never un-earn one. Kept deliberately small.
+export const BADGES = [
+  { id: 'first-solve', label: 'First solve', hint: 'Solve any problem for the first time.' },
+  { id: 'first-mastered', label: 'First mastered', hint: 'Take a problem all the way to mastered.' },
+  { id: 'topic-cleared', label: 'Topic cleared', hint: 'Reach mastered on every problem in one topic.' },
+  { id: 'ten-day-streak', label: 'Ten-day streak', hint: 'Practise ten calendar days in a row.' },
+  { id: 'half-catalog', label: 'Halfway', hint: 'Attempt 75 of the 150 problems.' },
+  { id: 'century', label: 'Century', hint: 'Attempt 100 of the 150 problems.' }
+] as const;
+
+export type BadgeId = (typeof BADGES)[number]['id'];
+
+// Streak length (calendar days in a row) that unlocks `ten-day-streak`.
+export const BADGE_STREAK_DAYS = 10;
+// Attempted-problem counts that unlock `half-catalog` / `century`.
+export const BADGE_ATTEMPTED_HALF = 75;
+export const BADGE_ATTEMPTED_CENTURY = 100;

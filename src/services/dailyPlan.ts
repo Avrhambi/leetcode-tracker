@@ -117,7 +117,7 @@ function fillNewProblems(plan: DailyPlanItem[], target: number, problems: Catalo
 //   - difficulty ceiling: a struggling problem contributes its real (0) stage,
 //     so the ceiling stays low — a topic the user is failing must not unlock
 //     Medium/Hard just because its struggling problems were lifted to 0.5.
-function topicMastery(topic: string, problems: CatalogProblem[], progressByProblem: Map<string, ProblemProgress>, forPriority: boolean): number {
+export function topicMastery(topic: string, problems: CatalogProblem[], progressByProblem: Map<string, ProblemProgress>, forPriority: boolean): number {
   const topicProblems = problems.filter((problem) => problem.primaryTopic === topic);
   if (topicProblems.length === 0) return 1;
   const total = topicProblems.reduce((sum, problem) => {
