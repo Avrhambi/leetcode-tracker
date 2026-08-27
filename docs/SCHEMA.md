@@ -63,9 +63,9 @@ export interface RecommendationEvent {
 
 export type AppSettingKey =
   | 'catalogVersion'
-  | 'streakGraceRemaining'      // integer, streak grace days left
-  | 'streakGraceRefreshedOn'    // YYYY-MM-DD of the last grace top-up
-  | 'lastActiveOn';             // YYYY-MM-DD of the last recorded attempt
+  | 'streakGraceRemaining'      // integer, streak grace allowance (reserved; the
+  | 'streakGraceRefreshedOn'    //   dashboard defaults these when absent and
+  | 'lastActiveOn';             //   re-derives grace usage from the active dates)
 
 export interface AppSetting {
   key: AppSettingKey;
@@ -89,7 +89,8 @@ export const dexieStores = {
   settings: '&key'
 } as const;
 // Dexie versions: v1 initial; v2 backfills consecutiveWeak/struggling on progress
-// (no index change). The streak settings rows are written lazily on first update
-// and default when absent, so reset / v1-restore need no reseed. v3 (later PR)
-// adds a gamification store.
+// (no index change). The streak settings rows are not seeded and currently not
+// written — the dashboard defaults the grace allowance when they are absent and
+// re-derives usage from the active dates, so reset / v1-restore need no reseed.
+// v3 (later PR) adds a gamification store.
 ```

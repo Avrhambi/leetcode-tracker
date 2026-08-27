@@ -1,9 +1,12 @@
-import type { Attempt, CatalogProblem, ProblemProgress } from '../types/models';
+import { STREAK_GRACE_PER_WEEK } from '../services/constants';
+import { currentStreak, type StreakGraceState } from '../services/streak';
+import type { AppSetting, Attempt, CatalogProblem, ProblemProgress } from '../types/models';
 
 interface DashboardProps {
   attempts: Attempt[];
   problems: CatalogProblem[];
   progress: ProblemProgress[];
+  settings: AppSetting[];
 }
 
 function localDate(date = new Date()): string {
@@ -13,18 +16,21 @@ function localDate(date = new Date()): string {
   return `${year}-${month}-${day}`;
 }
 
-function currentStreak(attempts: Attempt[]): number {
-  const dates = new Set(attempts.map((attempt) => attempt.attemptedOn));
-  const cursor = new Date();
-  let streak = 0;
-  while (dates.has(localDate(cursor))) {
-    streak += 1;
-    cursor.setDate(cursor.getDate() - 1);
-  }
-  return streak;
+// Grace state lives in the `settings` rows, but nothing writes a spent-down
+// balance (see services/streak.ts) and the refresh caps at STREAK_GRACE_PER_WEEK,
+// which equals this default — so when the rows are absent (fresh install, reset,
+// v1 restore) the allowance is simply the default and grace usage is re-derived
+// from the active dates on every render.
+function graceStateFrom(settings: AppSetting[]): StreakGraceState {
+  const byKey = new Map(settings.map((row) => [row.key, row.value]));
+  const remaining = Number(byKey.get('streakGraceRemaining'));
+  return {
+    graceRemaining: Number.isFinite(remaining) ? remaining : STREAK_GRACE_PER_WEEK,
+    graceRefreshedOn: byKey.get('streakGraceRefreshedOn') ?? ''
+  };
 }
 
-export function Dashboard({ attempts, problems, progress }: DashboardProps) {
+export function Dashboard({ attempts, problems, progress, settings }: DashboardProps) {
   const today = localDate();
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
@@ -33,10 +39,13 @@ export function Dashboard({ attempts, problems, progress }: DashboardProps) {
   const topics = [...new Set(problems.map((problem) => problem.primaryTopic))];
   const dueReviews = progress.filter((item) => item.nextReviewDate !== null && item.nextReviewDate <= today).length;
 
+  const activeDates = new Set(attempts.map((attempt) => attempt.attemptedOn));
+  const { streak, graceDaysUsed } = currentStreak(activeDates, graceStateFrom(settings));
+
   return <section className="dashboard" aria-labelledby="dashboard-heading">
     <div className="section-heading"><div><p className="eyebrow">Overview</p><h2 id="dashboard-heading">Dashboard</h2></div></div>
     <div className="metric-grid">
-      <article><strong>{currentStreak(attempts)}</strong><span>Current streak</span></article>
+      <article><strong>{streak}</strong><span>Current streak{graceDaysUsed > 0 && <> · <span className="grace-note">{graceDaysUsed} grace {graceDaysUsed === 1 ? 'day' : 'days'} used</span></>}</span></article>
       <article><strong>{attempts.filter((attempt) => attempt.attemptedOn >= weekStart && attempt.attemptedOn <= today).length}</strong><span>Attempts in 7 days</span></article>
       <article><strong>{dueReviews}</strong><span>Due reviews</span></article>
     </div>

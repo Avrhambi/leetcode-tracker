@@ -43,8 +43,8 @@ Read: `AGENTS.md`, `SPEC.md`, `SCHEMA.md`, `design/adaptive-coach-and-gamificati
 - [x] Dexie `version(2)` migration (progress backfill) + backup `formatVersion: 2` with v1 back-compat.
 - [x] Wire the catalog attempt form to complete a matching daily recommendation; reword the form copy and adapt its options to the outcome; surface the unused attempt fields.
 - [x] Render problem status and difficulty as prominent badges in the catalog and problem detail.
-- [ ] Wire the grace-day streak into the dashboard.
-- [ ] Run `npm run verify`.
+- [x] Wire the grace-day streak into the dashboard.
+- [x] Run `npm run verify`.
 
 ## 7 — Gamification
 Read: `AGENTS.md`, `SPEC.md`, `SCHEMA.md`, `design/adaptive-coach-and-gamification.md`

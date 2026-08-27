@@ -46,6 +46,10 @@ export function currentStreak(activeDates: Set<string>, graceState: StreakGraceS
   let streak = 0;
   let graceLeft = refreshed.graceRemaining;
   let graceDaysUsed = 0;
+  // Grace days spent walking a gap we have not yet bridged. Committed to
+  // `graceDaysUsed` only when a later active day is reached; dropped if the walk
+  // dead-ends (a gap before the user's first-ever attempt bridged nothing).
+  let pendingGrace = 0;
   const cursor = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
   // If today has no attempt yet, don't break the streak — start counting from
@@ -57,12 +61,14 @@ export function currentStreak(activeDates: Set<string>, graceState: StreakGraceS
     const key = toKey(cursor);
     if (activeDates.has(key)) {
       streak += 1;
+      graceDaysUsed += pendingGrace;
+      pendingGrace = 0;
       cursor.setDate(cursor.getDate() - 1);
       continue;
     }
     if (graceLeft > 0 && streak > 0) {
       graceLeft -= 1;
-      graceDaysUsed += 1;
+      pendingGrace += 1;
       cursor.setDate(cursor.getDate() - 1);
       continue;
     }

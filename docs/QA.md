@@ -28,9 +28,11 @@
 - Solve a struggling problem strongly: the flag clears and the next review returns to the normal ladder.
 
 ## Streak grace
-- Miss one day after a run, then record an attempt: the streak survives (one grace day spent).
-- Miss two consecutive days with no grace left: the streak resets to the new run.
+- Miss one day after a run, then record an attempt: the streak survives (one grace day spent) and the dashboard shows "1 grace day used".
+- Miss two consecutive days with no grace left: the streak resets to the new run and the grace note disappears.
 - After seven active days, confirm a grace day is available again.
+- Record an attempt yesterday but none today: the streak still shows the run ending yesterday, not 0.
+- Reset all data, reseed, and record one attempt: the streak shows 1 with no grace note (the grace settings rows are absent and default cleanly).
 
 ## Problems and links
 - Search waits briefly, then matches titles and slugs case-insensitively.

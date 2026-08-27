@@ -51,6 +51,14 @@ describe('currentStreak', () => {
     expect(result.streak).toBe(0);
     expect(result.graceDaysUsed).toBe(0);
   });
+
+  it('does not count grace that bridged nothing (gap before the first-ever attempt)', () => {
+    // one active day, then nothing before it — grace must not be "spent" walking
+    // backwards into empty pre-history.
+    const result = currentStreak(dates('2026-07-19'), grace(1), at('2026-07-19'));
+    expect(result.streak).toBe(1);
+    expect(result.graceDaysUsed).toBe(0);
+  });
 });
 
 describe('refreshGrace', () => {

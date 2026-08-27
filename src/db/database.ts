@@ -24,9 +24,9 @@ db.version(1).stores(stores);
 // field presence.
 //
 // The streak-cadence settings (`streakGraceRemaining`, `streakGraceRefreshedOn`,
-// `lastActiveOn`) are NOT seeded here. They are created lazily on first write and
-// the reader defaults when they are absent — so a reset or a v1 restore (neither
-// of which re-runs this upgrade) leaves the streak working, not broken.
+// `lastActiveOn`) are NOT seeded here and are currently not written — the
+// dashboard reader defaults when they are absent, so a reset or a v1 restore
+// (neither of which re-runs this upgrade) leaves the streak working, not broken.
 db.version(2).stores(stores).upgrade(async (tx) => {
   await tx.table<ProblemProgress>('progress').toCollection().modify((row) => {
     if (typeof row.consecutiveWeak !== 'number') row.consecutiveWeak = 0;

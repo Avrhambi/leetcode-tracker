@@ -153,8 +153,8 @@ interface GamificationState {
 
 **Dexie migrations:**
 - `db.version(2)...upgrade()` — backfills `consecutiveWeak: 0`, `struggling: false`
-  on existing `progress` rows. The streak `settings` rows are **not** seeded here —
-  they are written lazily on first update and the reader defaults when they are
+  on existing `progress` rows. The streak `settings` rows are **not** seeded here
+  and are currently not written — the dashboard reader defaults when they are
   absent, so a reset or a v1 restore (neither re-runs this upgrade) still works.
   Ships in the coach-fixes PR.
 - `db.version(3).stores({ gamification: '&key', ... }).upgrade()` — creates the
@@ -210,14 +210,18 @@ out-of-order backdating, which a stored "last advance date" is not.
   started) and continue; when grace is exhausted, stop.
 - The grace allowance refreshes to `STREAK_GRACE_PER_WEEK` (default 1, and
   capped there) once per rolling 7 active days, tracked by `streakGraceRefreshedOn`.
-- Pure function takes `(activeDates, graceState, today)` and returns
+- Pure function takes `(activeDates, graceState, now)` and returns
   `{ streak, graceDaysUsed, graceState }`. **`graceState` in the result is the
   refreshed allowance, not a spent-down balance** — grace consumption is
-  re-derived from `activeDates` every call, so the function is idempotent and the
-  Dashboard can persist `graceState` on every render without corrupting the
-  streak. `graceDaysUsed` is for display only. The Dexie read/write of
-  `graceState` lives in `db/`; when the `settings` rows are absent the reader
-  defaults to `{ graceRemaining: STREAK_GRACE_PER_WEEK, graceRefreshedOn: '' }`.
+  re-derived from `activeDates` every call, so the function is idempotent.
+  `graceDaysUsed` is for display only.
+- The Dashboard reads `graceState` from the `settings` rows and does **not**
+  write it back: nothing persists a spent-down balance, and `refreshGrace` caps
+  the allowance at `STREAK_GRACE_PER_WEEK`, which equals the reader default
+  (`{ graceRemaining: STREAK_GRACE_PER_WEEK, graceRefreshedOn: '' }`) — so a
+  write would only advance `graceRefreshedOn` with no observable effect, while
+  adding a live-query/effect write-loop hazard on a table nothing else queries.
+  The rows stay reserved for a future grant-cadence change.
 
 **XP + levels** (`src/services/gamification.ts`, pure):
 - `xpForAttempt(quality, kind, isFirstOfDay)` → e.g. strong 20 / partial 12 /
