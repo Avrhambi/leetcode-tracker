@@ -23,6 +23,18 @@ describe('validateBackupPayload', () => {
     const withStreak = { ...v2Backup, settings: [{ key: 'streakGraceRemaining', value: '1' }, { key: 'streakGraceRefreshedOn', value: '2026-07-19' }] };
     expect(validateBackupPayload(withStreak)).toEqual(withStreak);
   });
+  it('still accepts a v2 backup that carries no gamification row', () => {
+    expect(validateBackupPayload(v2Backup)).toEqual(v2Backup);
+    expect('gamification' in validateBackupPayload(v2Backup)).toBe(false);
+  });
+  it('accepts a v2 backup with a well-formed gamification row', () => {
+    const withXp = { ...v2Backup, gamification: { key: 'state', xp: 340, updatedAt: '2026-08-01T00:00:00.000Z' } };
+    expect(validateBackupPayload(withXp)).toEqual(withXp);
+  });
+  it('rejects a malformed gamification row', () => {
+    expect(() => validateBackupPayload({ ...v2Backup, gamification: { key: 'state', xp: -1, updatedAt: 'x' } })).toThrow('valid LeetCode Tracker backup');
+    expect(() => validateBackupPayload({ ...v2Backup, gamification: { key: 'wrong', xp: 10, updatedAt: 'x' } })).toThrow('valid LeetCode Tracker backup');
+  });
   it('rejects invalid nested user data before restore', () => {
     expect(() => validateBackupPayload({ ...v1Backup, attempts: [{ id: 'a' }] })).toThrow('valid LeetCode Tracker backup');
   });

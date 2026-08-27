@@ -1,5 +1,6 @@
 import { db } from './database';
-import type { AppSetting, Attempt, BackupPayload, ProblemProgress, RecommendationEvent } from '../types/models';
+import { replayXp } from '../services/gamification';
+import type { AppSetting, Attempt, BackupPayload, GamificationState, ProblemProgress, RecommendationEvent } from '../types/models';
 
 const outcomes = ['solved_independently', 'solved_with_hint', 'watched_solution', 'could_not_solve'];
 const perceivedDifficulties = ['easy', 'manageable', 'hard'];
@@ -43,38 +44,50 @@ function isSetting(value: unknown): value is AppSetting {
   return isRecord(value) && isOneOf(value.key, settingKeys) && isString(value.value);
 }
 
+// Optional in a v2 payload: a backup taken by a coach-fixes-era build has no
+// gamification row, and it must still restore.
+function isGamificationState(value: unknown): value is GamificationState {
+  return isRecord(value) && value.key === 'state' && isInteger(value.xp) && value.xp >= 0 && isString(value.updatedAt);
+}
+
 export function validateBackupPayload(value: unknown): BackupPayload {
-  if (!isRecord(value) || (value.formatVersion !== 1 && value.formatVersion !== 2) || !isString(value.exportedAt) || !Array.isArray(value.progress) || !Array.isArray(value.attempts) || !Array.isArray(value.recommendationEvents) || !Array.isArray(value.settings) || !value.progress.every(isProgress) || !value.attempts.every(isAttempt) || !value.recommendationEvents.every(isRecommendationEvent) || !value.settings.every(isSetting)) {
+  if (!isRecord(value) || (value.formatVersion !== 1 && value.formatVersion !== 2) || !isString(value.exportedAt) || !Array.isArray(value.progress) || !Array.isArray(value.attempts) || !Array.isArray(value.recommendationEvents) || !Array.isArray(value.settings) || !value.progress.every(isProgress) || !value.attempts.every(isAttempt) || !value.recommendationEvents.every(isRecommendationEvent) || !value.settings.every(isSetting) || (value.gamification !== undefined && !isGamificationState(value.gamification))) {
     throw new Error('This file is not a valid LeetCode Tracker backup.');
   }
   return value as unknown as BackupPayload;
 }
 
 export async function createBackupPayload(): Promise<BackupPayload> {
-  const [progress, attempts, recommendationEvents, settings] = await Promise.all([
-    db.progress.toArray(), db.attempts.toArray(), db.recommendationEvents.toArray(), db.settings.toArray()
+  const [progress, attempts, recommendationEvents, settings, gamification] = await Promise.all([
+    db.progress.toArray(), db.attempts.toArray(), db.recommendationEvents.toArray(), db.settings.toArray(), db.gamification.get('state')
   ]);
-  return { formatVersion: 2, exportedAt: new Date().toISOString(), progress, attempts, recommendationEvents, settings };
+  return { formatVersion: 2, exportedAt: new Date().toISOString(), progress, attempts, recommendationEvents, settings, ...(gamification ? { gamification } : {}) };
 }
 
 export async function restoreBackup(file: File): Promise<void> {
   if (file.size > 5 * 1024 * 1024) throw new Error('Backup files must be 5 MB or smaller.');
   const payload = validateBackupPayload(JSON.parse(await file.text()));
-  await db.transaction('rw', db.progress, db.attempts, db.recommendationEvents, db.settings, async () => {
-    await Promise.all([db.progress.clear(), db.attempts.clear(), db.recommendationEvents.clear(), db.settings.clear()]);
+  await db.transaction('rw', db.progress, db.attempts, db.recommendationEvents, db.settings, db.gamification, async () => {
+    await Promise.all([db.progress.clear(), db.attempts.clear(), db.recommendationEvents.clear(), db.settings.clear(), db.gamification.clear()]);
     await Promise.all([
       db.progress.bulkPut(payload.progress.map(withProgressDefaults)),
       db.attempts.bulkPut(payload.attempts),
       db.recommendationEvents.bulkPut(payload.recommendationEvents),
       db.settings.bulkPut(payload.settings)
     ]);
+    // A v2 backup from a coach-fixes-era build carries no gamification row —
+    // rebuild lifetime XP from the restored attempts so it is never left showing
+    // the previous profile's total (or, on a fresh v3 store, zero).
+    const gamification: GamificationState = payload.gamification
+      ?? { key: 'state', xp: replayXp(payload.attempts), updatedAt: new Date().toISOString() };
+    await db.gamification.put(gamification);
   });
 }
 
 export async function resetAndReseed(): Promise<void> {
   const { catalog, CATALOG_VERSION } = await import('../data/catalog');
-  await db.transaction('rw', db.problems, db.progress, db.attempts, db.recommendationEvents, db.settings, async () => {
-    await Promise.all([db.problems.clear(), db.progress.clear(), db.attempts.clear(), db.recommendationEvents.clear(), db.settings.clear()]);
+  await db.transaction('rw', [db.problems, db.progress, db.attempts, db.recommendationEvents, db.settings, db.gamification], async () => {
+    await Promise.all([db.problems.clear(), db.progress.clear(), db.attempts.clear(), db.recommendationEvents.clear(), db.settings.clear(), db.gamification.clear()]);
     await db.problems.bulkPut(catalog);
     await db.settings.put({ key: 'catalogVersion', value: CATALOG_VERSION });
   });
