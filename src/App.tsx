@@ -8,7 +8,7 @@ import { Settings } from './components/Settings';
 import { db } from './db/database';
 import { completeRecommendation, persistRecommendations, skipRecommendation } from './db/recommendations';
 import { seedCatalog } from './db/seedCatalog';
-import { selectDailyPlan } from './domain/dailyPlan';
+import { selectDailyPlan } from './services/dailyPlan';
 import type { CatalogProblem } from './types/models';
 
 export default function App() {

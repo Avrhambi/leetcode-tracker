@@ -1,4 +1,4 @@
-import { qualityFor, progressAfterAttempt } from '../domain/reviews';
+import { qualityFor, progressAfterAttempt } from '../services/reviews';
 import type { Attempt, HelpType, Outcome, PerceivedDifficulty } from '../types/models';
 import { db } from './database';
 
