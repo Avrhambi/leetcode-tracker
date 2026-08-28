@@ -6,7 +6,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "npm run lint --silent && npm run typecheck --silent"
+            "command": "C:/Python314/python.exe",
+            "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/lint-edited.py"]
           }
         ]
       }
