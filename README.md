@@ -83,6 +83,5 @@ plain CSS. The 150-problem catalog is bundled — first launch seeds it and you'
 ready to go.
 
 See [`docs/`](docs/) for the full specification (`SPEC.md`), data model
-(`SCHEMA.md`), manual test cases (`QA.md`), and the design rationale behind the
-adaptive algorithm (`algorithm.md`).
+(`SCHEMA.md`), and manual test cases (`QA.md`).
 

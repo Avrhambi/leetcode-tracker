@@ -36,7 +36,7 @@ Read: `../CLAUDE.md`, `SPEC.md`, `SCHEMA.md`
 - [x] Run `npm run verify`.
 
 ## 6 — Adaptive-coach fixes
-Read: `../CLAUDE.md`, `SPEC.md`, `SCHEMA.md`, `algorithm.md`
+Read: `../CLAUDE.md`, `SPEC.md`, `SCHEMA.md`
 - [x] Cap review-stage advancement at one attempt per calendar day (any entry point).
 - [x] Flag `struggling` problems, back off their reviews, and stop them pulling their topic's new-problem priority.
 - [x] Add pure `mastery` (topic trajectory, struggling list) and `streak` (grace days) services.
@@ -47,7 +47,7 @@ Read: `../CLAUDE.md`, `SPEC.md`, `SCHEMA.md`, `algorithm.md`
 - [x] Run `npm run verify`.
 
 ## 7 — Gamification
-Read: `../CLAUDE.md`, `SPEC.md`, `SCHEMA.md`, `algorithm.md`
+Read: `../CLAUDE.md`, `SPEC.md`, `SCHEMA.md`
 - [x] XP and levels as pure rules with unit tests; Dexie `version(3)` store + XP replay shared with backup restore.
 - [x] Dashboard XP/level strip.
 - [x] Badges as pure rules with unit tests (monotonic union, no replay); badge shelf.
