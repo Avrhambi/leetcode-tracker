@@ -92,7 +92,12 @@ Do not add a dependency without asking first, and explain why existing code can'
 
 ## Automation
 
-`.claude/settings.json` runs `npm run lint && npm run typecheck` after every Edit/Write.
+`.claude/settings.json` runs `.claude/hooks/lint-edited.py` after every Edit/Write: eslint
+on **just the edited file**, then `tsc -b` across the project (TypeScript can't check one
+file in isolation). Non-`.ts`/`.tsx` edits skip both and exit immediately. If the payload
+carries no file path it falls back to linting the whole project, so the hook never
+silently checks nothing.
+
 It does not build or run tests — do that yourself via `npm run verify` before committing.
 
 ## Delivery
