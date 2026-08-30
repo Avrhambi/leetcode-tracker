@@ -89,8 +89,8 @@ streak, not the XP one), and the post-attempt level, checked after every attempt
 save. The earned set is stored as a monotonic union — once a badge is earned it
 is never lost, even when a later weak attempt resets a review stage or a streak
 breaks. The header shows a compact strip of all thirteen marks (filled when
-earned, dim outline when locked; the strip scrolls inside its own box on a narrow
-screen so the page never does); a badge that unlocks while the strip is mounted
+earned, dim outline when locked; the strip can scroll inside its own box if the
+header row is ever too tight, so the page itself never does); a badge that unlocks while the strip is mounted
 gets a one-shot reveal fade. On restore of a backup that has no badge data, the
 strip starts all-locked and re-fills on the next attempt.
 

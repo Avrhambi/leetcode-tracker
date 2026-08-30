@@ -66,7 +66,7 @@
   ```
   Check it at full width, with the panel open, and narrow.
 - Restore a backup with no badge data: the badge strip starts all-locked and re-fills after the next attempt.
-- The header badge strip shows all 13 marks (first steps, then the consistency / mastery / volume / level tiers). On a narrow screen it scrolls sideways inside its own box — the page itself never gains a horizontal scrollbar.
+- The header badge strip shows all 13 marks (first steps, then the consistency / mastery / volume / level tiers), each a distinct silhouette per axis. At the 720 px layout the strip drops to its own header row and still fits; if it were ever squeezed it scrolls sideways inside its own box, and the page itself never gains a horizontal scrollbar (`document.documentElement.scrollWidth === clientWidth`).
 - Reach a 7-day streak: the "Week streak" mark fills. Reach level 5: "Level 5" fills. Neither un-fills if the streak later breaks or (impossible but by construction) the level were to drop.
 - On a fresh install (empty catalog never happens in practice, but): "All mastered" and "Five topics cleared" are not granted from an empty progress set.
 
@@ -86,10 +86,11 @@
 - Confirm no problem statement or solution text is stored or displayed.
 
 ## Backup, restore, and failures
-- Export data, reset, restore the export, and confirm all user data returns, XP included.
+- Export data, reset, restore the export, and confirm all user data returns; XP is always rebuilt from the restored attempts (never trusted from the payload), so it matches a fresh replay under the current formula.
 - Restore a pre-v2 backup file: it succeeds, and every problem's `consecutiveWeak` / `struggling` default to 0 / false.
-- Restore a v2 backup that has no gamification row: it succeeds, XP is rebuilt from the restored attempts, and badges start empty.
-- Restore a v2 backup whose gamification row carries a badges array: the badge strip shows exactly those badges filled.
+- Restore a backup exported from a pre-multiplier build: XP comes back higher than the number in the file — recomputed with the streak multiplier, not copied.
+- Restore a backup that has no gamification row: it succeeds, XP is rebuilt from the restored attempts, and badges start empty.
+- Restore a backup whose gamification row carries a badges array: the badge strip shows exactly those badges filled.
 - Reject a file over 5 MB, malformed JSON, an unsupported format version, and invalid fields without changing existing data.
 - Simulate blocked IndexedDB and confirm an inline error with a working explicit Retry action.
 - Confirm reset does nothing until `RESET` is typed exactly.

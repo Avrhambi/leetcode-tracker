@@ -50,8 +50,8 @@
 .milestone.locked { opacity: 0.45; }
 .milestone.earned.fresh { animation: badge-reveal 600ms var(--ease-out) 1; }
 .milestone-mark { display: block; width: 1.25rem; height: 1.25rem; }
-.milestone-mark polygon, .milestone-mark circle, .milestone-mark rect { fill: var(--color-accent); stroke: var(--color-accent); stroke-width: 6; }
-.milestone.locked .milestone-mark polygon, .milestone.locked .milestone-mark circle, .milestone.locked .milestone-mark rect { fill: none; stroke: var(--color-rule-2); }
+.milestone-mark polygon, .milestone-mark circle, .milestone-mark rect, .milestone-mark path { fill: var(--color-accent); stroke: var(--color-accent); stroke-width: 4; stroke-linejoin: round; }
+.milestone.locked .milestone-mark polygon, .milestone.locked .milestone-mark circle, .milestone.locked .milestone-mark rect, .milestone.locked .milestone-mark path { fill: none; stroke: var(--color-rule-2); }
 
 @keyframes badge-reveal {
   0% { transform: translateY(0.5rem); opacity: 0; }
