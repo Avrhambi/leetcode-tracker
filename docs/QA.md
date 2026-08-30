@@ -8,7 +8,8 @@
 
 ## Daily plan
 - The "Today's challenge" button in the stat strip opens the plan as a modal; Esc and a backdrop click both close it, and the count on the button matches the number of still-open items (it drops as items are completed).
-- With the modal open and an attempt form expanded, the page itself still does not scroll — only the modal body does.
+- "Give feedback" on a plan item closes the modal and opens that problem full screen (the same view a topic list opens); Back returns to the bare map. Recording the attempt there marks the plan item "Logged" when the modal is reopened.
+- With the modal open and a multi-item plan, the page itself still does not scroll — only the modal body does.
 - With no history, the plan contains one new problem and no reviews.
 - After activity across topics, no new recommendation repeats either of the last two new-problem topics when another topic is eligible.
 - Create three overdue reviews: only the two earliest appear, followed by one new problem.
@@ -107,7 +108,7 @@ install — an empty map exercises none of the ring, halo, or lit-trail states.
 - Full width (~1440x900), no panel open.
 - Topic panel open on a long topic (Arrays & Hashing): the route scales into the narrower box with labels still legible and no overlaps, and the panel's list scrolls inside its own box.
 - Below 48 rem (~700x800): the panel stacks under the map, both fit the viewport, and each scrolls inside its own box; no horizontal scrolling. If the browser window will not resize this narrow, load the app in a same-origin `<iframe>` sized 700x800 and run the checks against its `contentDocument` — media queries evaluate against the iframe's own viewport. Confirm `documentElement.clientWidth` reads 700 first; if it reads the outer width the iframe is not establishing a viewport and the run proves nothing.
-- In each of the above, open the "Today's challenge" modal with a multi-item plan and the attempt form expanded, and open a problem full screen.
+- In each of the above, open the "Today's challenge" modal with a multi-item plan, and open a problem full screen.
 - At 720 px and desktop width, verify the topic panel sits beside the map.
 - Run `npm install`, then `npm run dev`; confirm startup succeeds.
 - Run the production build and serve its output; confirm direct app startup and local persistence work.
