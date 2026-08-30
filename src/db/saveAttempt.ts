@@ -3,7 +3,8 @@ import { openRecommendationsToComplete } from '../services/recommendations';
 import { badgesEarned } from '../services/badges';
 import { currentStreak, type StreakGraceState } from '../services/streak';
 import { STREAK_GRACE_PER_WEEK } from '../services/constants';
-import { awardAttemptXp, recordBadges } from './gamification';
+import { levelForXp } from '../services/gamification';
+import { awardAttemptXp, readGamification, recordBadges } from './gamification';
 import type { Attempt, HelpType, Outcome, PerceivedDifficulty } from '../types/models';
 import { db } from './database';
 
@@ -43,11 +44,12 @@ export async function saveAttempt(input: AttemptInput): Promise<void> {
     // inputs are reconstructible from attempt rows, so the v4 replay agrees.
     await awardAttemptXp(attempt.quality, !alreadyAttemptedToday, input.attemptedOn, activeDates, now);
 
-    // Badge check runs after the progress write so predicates see fresh state.
-    // The catalog and settings feed topic-completeness and the streak length;
+    // Badge check runs after the progress write so predicates see fresh state,
+    // and after the XP award so the level badges see the post-attempt level.
     // recordBadges unions into the stored set, so this only ever adds.
     const { streak } = currentStreak(new Set(attempts.map((row) => row.attemptedOn)), graceStateFrom(settings), now);
-    await recordBadges(badgesEarned({ progress, attempts, problems, currentStreakDays: streak }), now);
+    const level = levelForXp((await readGamification()).xp);
+    await recordBadges(badgesEarned({ progress, attempts, problems, currentStreakDays: streak, level }), now);
     // Recording an attempt from either entry point (daily plan or catalog)
     // completes any matching open daily recommendation for this problem today.
     const openEvents = await db.recommendationEvents.where('problemId').equals(input.problemId).toArray();

@@ -39,8 +39,11 @@
 - Reset all data, reseed, and record one attempt: the stat strip shows a 1-day streak with no grace note (the grace settings rows are absent and default cleanly).
 
 ## XP and levels
-- Record a strong first attempt of the day: the XP strip rises by 20 without a reload.
+- Record a strong first attempt of the day with no current streak: the XP strip rises by 20 without a reload.
 - Record a second attempt for the same problem the same day: XP rises by 5 (the reinforcement quarter), not 20.
+- Build a run of three consecutive active days: the `×1.1 XP` chip appears next to the level, and a strong attempt now rises the strip by 22, not 20. At seven days the chip reads `×1.25`; at fourteen, `×1.25`→`×1.5` and it never climbs past `×1.5`.
+- Skip a day so the run breaks: the chip drops back to hidden (×1.0) and attempts earn the base amount again.
+- Open an app that practised on a pre-multiplier build: on first load (the v4 upgrade) the XP total is higher than before — a possible one-time level bump, never a drop.
 - Reload the page: the level and XP are unchanged.
 - With the OS set to reduced motion, confirm the XP fill bar's slide is clamped to a brief 150 ms rather than a longer ease, and the level-up pulse and sweep do not play.
 - Open an app that was on a pre-gamification (coach-fixes) build with existing attempts: on first load the XP strip shows a non-zero total replayed from the attempt history.
@@ -63,6 +66,9 @@
   ```
   Check it at full width, with the panel open, and narrow.
 - Restore a backup with no badge data: the badge strip starts all-locked and re-fills after the next attempt.
+- The header badge strip shows all 13 marks (first steps, then the consistency / mastery / volume / level tiers). On a narrow screen it scrolls sideways inside its own box — the page itself never gains a horizontal scrollbar.
+- Reach a 7-day streak: the "Week streak" mark fills. Reach level 5: "Level 5" fills. Neither un-fills if the streak later breaks or (impossible but by construction) the level were to drop.
+- On a fresh install (empty catalog never happens in practice, but): "All mastered" and "Five topics cleared" are not granted from an empty progress set.
 
 ## Status labels
 - A problem whose last attempt was weak reads "Weak", not "attempted"; one in the review rotation reads "Mid"; a finished one reads "Mastered"; an untouched one reads "Not started".

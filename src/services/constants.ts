@@ -56,22 +56,45 @@ export function xpStreakMultiplier(streakDays: number): number {
 // so level 1 at 50 XP, level 2 at 200, level 3 at 450, level 4 at 800.
 export const XP_PER_LEVEL_UNIT = 50;
 
-// Milestone badges. Every predicate is a pure check of progress + attempts +
-// catalog; the earned set is stored as a monotonic union so a later weak attempt
-// (which resets a review stage) can never un-earn one. Kept deliberately small.
+// Milestone badges — the named checkpoints across all three progression axes
+// (consistency / mastery / volume, plus level). Every predicate is a pure,
+// monotonic check of progress + attempts + catalog + streak + level; the earned
+// set is stored as a monotonic union so a later weak attempt (which resets a
+// review stage) or a broken streak can never un-earn one. Ordered by axis, then
+// ascending within an axis, so the shelf reads as a progression.
 export const BADGES = [
+  // Volume / mastery — first steps
   { id: 'first-solve', label: 'First solve', hint: 'Solve any problem for the first time.' },
   { id: 'first-mastered', label: 'First mastered', hint: 'Take a problem all the way to mastered.' },
-  { id: 'topic-cleared', label: 'Topic cleared', hint: 'Reach mastered on every problem in one topic.' },
+  // Consistency
+  { id: 'week-streak', label: 'Week streak', hint: 'Practise seven calendar days in a row.' },
   { id: 'ten-day-streak', label: 'Ten-day streak', hint: 'Practise ten calendar days in a row.' },
+  { id: 'month-streak', label: 'Month streak', hint: 'Practise thirty calendar days in a row.' },
+  { id: 'century-streak', label: 'Hundred-day streak', hint: 'Practise a hundred calendar days in a row.' },
+  // Mastery
+  { id: 'topic-cleared', label: 'Topic cleared', hint: 'Reach mastered on every problem in one topic.' },
+  { id: 'five-topics-cleared', label: 'Five topics cleared', hint: 'Reach mastered on every problem in five topics.' },
+  { id: 'all-mastered', label: 'All mastered', hint: 'Reach mastered on all 150 problems.' },
+  // Volume
   { id: 'half-catalog', label: 'Halfway', hint: 'Attempt 75 of the 150 problems.' },
-  { id: 'century', label: 'Century', hint: 'Attempt 100 of the 150 problems.' }
+  { id: 'century', label: 'Century', hint: 'Attempt 100 of the 150 problems.' },
+  // Level
+  { id: 'level-5', label: 'Level 5', hint: 'Reach level 5.' },
+  { id: 'level-10', label: 'Level 10', hint: 'Reach level 10.' }
 ] as const;
 
 export type BadgeId = (typeof BADGES)[number]['id'];
 
-// Streak length (calendar days in a row) that unlocks `ten-day-streak`.
+// Streak lengths (calendar days in a row) that unlock the consistency badges.
+export const BADGE_STREAK_WEEK = 7;
 export const BADGE_STREAK_DAYS = 10;
+export const BADGE_STREAK_MONTH = 30;
+export const BADGE_STREAK_CENTURY = 100;
 // Attempted-problem counts that unlock `half-catalog` / `century`.
 export const BADGE_ATTEMPTED_HALF = 75;
 export const BADGE_ATTEMPTED_CENTURY = 100;
+// Topics cleared for `five-topics-cleared`.
+export const BADGE_TOPICS_CLEARED = 5;
+// Levels that unlock the level badges.
+export const BADGE_LEVEL_MID = 5;
+export const BADGE_LEVEL_HIGH = 10;

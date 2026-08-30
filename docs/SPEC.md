@@ -73,16 +73,26 @@ a one-shot pulse plays; a level-up that happens while the strip is unmounted
 last announced.
 
 ## Badges
-Six milestone badges: first solve, first mastered, topic cleared (every problem
-in one topic mastered), ten-day streak, halfway (75 distinct problems attempted),
-century (100). Each is a pure predicate over progress, attempts, the catalog, and
-the current streak length, checked after every attempt save. The earned set is
-stored as a monotonic union — once a badge is earned it is never lost, even when
-a later weak attempt resets the review stage that earned it. The header shows a
-compact strip of all six marks (filled when earned, dim outline when locked); a
-badge that unlocks while the strip is mounted gets a one-shot reveal fade. On
-restore of a backup that has no badge data, the strip starts all-locked and
-re-fills on the next attempt.
+Thirteen milestone badges — the named checkpoints across the progression axes:
+
+- **First steps:** first solve, first mastered.
+- **Consistency:** week streak (7 days in a row), ten-day streak, month streak
+  (30), hundred-day streak (100).
+- **Mastery:** topic cleared (every problem in one topic mastered), five topics
+  cleared, all mastered (all 150).
+- **Volume:** halfway (75 distinct problems attempted), century (100).
+- **Level:** level 5, level 10.
+
+Each is a pure, monotonic predicate over progress, attempts, the catalog, the
+current streak length (grace-inclusive — the streak badges follow the displayed
+streak, not the XP one), and the post-attempt level, checked after every attempt
+save. The earned set is stored as a monotonic union — once a badge is earned it
+is never lost, even when a later weak attempt resets a review stage or a streak
+breaks. The header shows a compact strip of all thirteen marks (filled when
+earned, dim outline when locked; the strip scrolls inside its own box on a narrow
+screen so the page never does); a badge that unlocks while the strip is mounted
+gets a one-shot reveal fade. On restore of a backup that has no badge data, the
+strip starts all-locked and re-fills on the next attempt.
 
 ## Topic map and the struggling signal
 The workbench renders the topic map as a quest path — one continuous trail

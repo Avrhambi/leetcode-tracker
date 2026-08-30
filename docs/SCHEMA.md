@@ -145,10 +145,13 @@ backup restore when the payload carries no gamification row.
 
 ### Badges
 
-`badgesEarned(progress, attempts, problems, currentStreakDays)` (services/badges.ts)
-returns the badge ids currently satisfied. `saveAttempt` calls it after the
-progress write, with the streak length computed from the same transaction's
-attempts + settings, and `recordBadges` unions the result into the stored set —
-so a badge is monotonic and needs no replay (returning users pick badges up on
-their next attempt). No Dexie version bump: `gamification: '&key'` has no index
-on `badges`.
+`badgesEarned({ progress, attempts, problems, currentStreakDays, level })`
+(services/badges.ts) returns the badge ids currently satisfied — 13 across the
+first-steps / consistency / mastery / volume / level axes. `saveAttempt` calls it
+after the progress write and after the XP award (so the level badges see the
+post-attempt level), with the streak length from the same transaction's attempts
++ settings and the level derived from the freshly-written XP; `recordBadges`
+unions the result into the stored set — so a badge is monotonic and needs no
+replay (returning users pick badges up on their next attempt). No Dexie version
+bump: `gamification: '&key'` has no index on `badges`. `all-mastered` and
+`five-topics-cleared` guard against a vacuous `.every` on an empty catalog.
