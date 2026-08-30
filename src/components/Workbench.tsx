@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { STREAK_GRACE_PER_WEEK } from '../services/constants';
 import { currentStreak, type StreakGraceState } from '../services/streak';
 import { masteryByTopic } from '../services/mastery';
-import type { DailyPlanItem } from '../services/dailyPlan';
+import { dueReviewQueue, type DailyPlanItem } from '../services/dailyPlan';
 import { TopicMap } from './TopicMap';
 import { SidePanel, type Panel } from './SidePanel';
 import { ProblemDetail } from './ProblemDetail';
@@ -110,7 +110,18 @@ export function Workbench({ attempts, problems, progress, progressByProblem, set
     <div className="workbench-stats" aria-label="Progress summary">
       <span><b>{streak}</b> day streak{graceDaysUsed > 0 && <> · <span className="grace-note">{graceDaysUsed} grace {graceDaysUsed === 1 ? 'day' : 'days'}</span></>}</span>
       <span><b>{attemptsThisWeek}</b> attempts · 7 days</span>
-      <span><b>{dueReviews}</b> for review</span>
+      <button
+        type="button"
+        className="review-trigger"
+        data-open={dueReviews > 0}
+        aria-pressed={panel?.kind === 'review'}
+        onClick={() => {
+          setSearchInput('');
+          setPanel((current) => (current?.kind === 'review' ? null : { kind: 'review' }));
+        }}
+      >
+        <b>{dueReviews}</b> for review
+      </button>
       <button
         type="button"
         className="challenge-trigger"
@@ -136,7 +147,19 @@ export function Workbench({ attempts, problems, progress, progressByProblem, set
         the list to return to. */}
     {panel?.kind === 'problem'
       ? <div className="workbench-focus">
-          <ProblemDetail problem={panel.problem} onBack={() => setPanel(panel.back)} />
+          {(() => {
+            const fromReview = panel.back?.kind === 'review';
+            const nextInReview = fromReview
+              ? dueReviewQueue(problems, progress).find((entry) => entry.problem.id !== panel.problem.id)?.problem ?? null
+              : null;
+            return <ProblemDetail
+              problem={panel.problem}
+              onBack={() => setPanel(panel.back)}
+              reviewMode={fromReview}
+              nextInReview={nextInReview}
+              onNextReview={(next) => setPanel({ kind: 'problem', problem: next, back: { kind: 'review' } })}
+            />;
+          })()}
         </div>
       : <div className={`workbench-map${panel ? ' has-panel' : ''}`}>
           <TopicMap
@@ -148,6 +171,7 @@ export function Workbench({ attempts, problems, progress, progressByProblem, set
           {panel && <SidePanel
             panel={panel}
             problems={problems}
+            progress={progress}
             progressByProblem={progressByProblem}
             onSelectProblem={(problem, back) => setPanel({ kind: 'problem', problem, back })}
             onClose={closePanel}

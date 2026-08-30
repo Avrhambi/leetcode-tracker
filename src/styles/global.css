@@ -138,6 +138,11 @@ button, input, select, textarea, a { transition: background-color var(--dur-shor
 /* The modal panel already supplies the surface, so the plan itself is bare. */
 .daily-plan { padding: 0; background: none; border: 0; }
 .daily-plan > .eyebrow { margin-bottom: var(--space-xs); }
+.review-trigger { display: inline-flex; align-items: baseline; gap: var(--space-xs); min-height: 2.25rem; padding: var(--space-2xs) var(--space-sm); color: var(--color-neutral); background: transparent; border: var(--rule-hair) solid var(--color-rule); border-radius: var(--radius-none); cursor: pointer; font: inherit; font-size: var(--text-sm); white-space: nowrap; }
+.review-trigger b { color: var(--color-accent); font-family: var(--font-display); font-size: var(--text-lg); }
+.review-trigger[data-open='true'] { border-color: var(--color-accent); }
+.review-trigger[aria-pressed='true'] { color: var(--color-accent); border-color: var(--color-accent); }
+.review-trigger:hover { color: var(--color-accent); border-color: var(--color-rule-2); }
 .challenge-trigger { display: inline-flex; align-items: center; gap: var(--space-xs); min-height: 2.25rem; padding: var(--space-2xs) var(--space-sm); margin-left: auto; color: var(--color-ink-2); background: transparent; border: var(--rule-hair) solid var(--color-rule); border-radius: var(--radius-none); cursor: pointer; font-size: var(--text-sm); white-space: nowrap; }
 .challenge-trigger[data-open='true'] { color: var(--color-accent); border-color: var(--color-accent); }
 .challenge-trigger:hover { color: var(--color-accent); border-color: var(--color-rule-2); }
@@ -188,8 +193,11 @@ button, input, select, textarea, a { transition: background-color var(--dur-shor
 
 /* ---- Problem detail ---- */
 .problem-detail { max-width: 52rem; }
-.problem-detail > button, button[type="submit"], .settings article button, .daily-plan button { min-height: 2.75rem; padding: var(--space-xs) var(--space-md); color: var(--color-accent-ink); background: var(--color-accent); border: var(--rule-hair) solid var(--color-accent); border-radius: var(--radius-none); cursor: pointer; white-space: nowrap; }
+.problem-detail > button, .problem-detail-nav button, button[type="submit"], .settings article button, .daily-plan button { min-height: 2.75rem; padding: var(--space-xs) var(--space-md); color: var(--color-accent-ink); background: var(--color-accent); border: var(--rule-hair) solid var(--color-accent); border-radius: var(--radius-none); cursor: pointer; white-space: nowrap; }
 .problem-detail > button { margin-bottom: var(--space-xl); }
+.problem-detail-nav { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-md); margin-bottom: var(--space-xl); }
+.problem-detail-nav .next-review { color: var(--color-ink); background: var(--color-paper); border-color: var(--color-accent); }
+.problem-detail-nav .review-cleared { color: var(--color-accent); font-size: var(--text-sm); }
 .daily-plan button { flex: 0 0 auto; color: var(--color-ink); background: var(--color-paper); border-color: var(--color-rule-2); }
 
 /* ---- Forms ---- */
