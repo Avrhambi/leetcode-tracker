@@ -30,6 +30,15 @@ export interface PathNode {
    * baseline — the one thing that made the first draft unreadable.
    */
   labelBelow: boolean;
+  /**
+   * Horizontal text anchor for the label. A centred label on a node sitting at
+   * the very edge of the viewBox spills past it and gets clipped, so the nodes
+   * at the ends of each leg anchor their text inward ('start' at the left edge,
+   * 'end' at the right) instead of 'middle'.
+   */
+  anchor: 'start' | 'middle' | 'end';
+  /** Small inward x-nudge for the label so an edge-anchored name clears the node's ring. */
+  labelDx: number;
 }
 
 // The trail snakes left-to-right, then right-to-left, one row per leg, so a long
@@ -66,6 +75,12 @@ export function layoutPath(topics: { topic: string; tier: TopicTier }[]): PathNo
     const x = MARGIN_X + (forward ? t : 1 - t) * span;
     const y = MARGIN_TOP + leg * legHeight + Math.sin(t * Math.PI * 2) * AMPLITUDE;
 
+    // A label centred on an edge node overflows the viewBox; anchor it inward.
+    // EDGE_BAND is how close to a margin counts as "at the edge".
+    const EDGE_BAND = span * 0.12;
+    const anchor: PathNode['anchor'] = x <= MARGIN_X + EDGE_BAND ? 'start' : x >= VIEW_W - MARGIN_X - EDGE_BAND ? 'end' : 'middle';
+    const labelDx = anchor === 'start' ? 1.5 : anchor === 'end' ? -1.5 : 0;
+
     return {
       topic: entry.topic,
       tier: entry.tier,
@@ -73,7 +88,9 @@ export function layoutPath(topics: { topic: string; tier: TopicTier }[]): PathNo
       x,
       y,
       tierStart: index > 0 && entry.tier !== topics[index - 1].tier,
-      labelBelow: withinLeg % 2 === 0
+      labelBelow: withinLeg % 2 === 0,
+      anchor,
+      labelDx
     };
   });
 }

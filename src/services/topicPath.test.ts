@@ -42,6 +42,17 @@ describe('layoutPath', () => {
     }
   });
 
+  it('anchors edge-of-leg labels inward so wide topic names cannot clip the viewBox', () => {
+    for (const node of layoutPath(TOPICS)) {
+      if (node.x < VIEW_W * 0.15) expect(node.anchor).toBe('start');
+      else if (node.x > VIEW_W * 0.85) expect(node.anchor).toBe('end');
+      // start pushes the label right, end pushes it left, middle no nudge.
+      if (node.anchor === 'start') expect(node.labelDx).toBeGreaterThan(0);
+      if (node.anchor === 'end') expect(node.labelDx).toBeLessThan(0);
+      if (node.anchor === 'middle') expect(node.labelDx).toBe(0);
+    }
+  });
+
   it('alternates the label side so neighbours never share a baseline', () => {
     const nodes = layoutPath(TOPICS);
     for (let i = 0; i < nodes.length - 1; i++) {

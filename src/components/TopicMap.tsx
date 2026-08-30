@@ -83,9 +83,9 @@ function Node({ node, cell, struggling, selected, onSelect }: {
     {complete && <text className="path-node-check" x={node.x} y={node.y} dy="0.09em" textAnchor="middle">★</text>}
     <text
       className="path-node-label"
-      x={node.x}
+      x={node.x + node.labelDx}
       y={node.labelBelow ? node.y + radius + 4.4 : node.y - radius - 2.4}
-      textAnchor="middle"
+      textAnchor={node.anchor}
     >{cell.topic}</text>
   </g>;
 }
@@ -139,19 +139,23 @@ export function TopicMap({ cells, strugglingTopics, selectedTopic, onSelectTopic
           strokeDasharray={`${progress.toFixed(3)} 1`}
         />
         {/* Tier gates — where the curriculum steps up. */}
-        {nodes.filter((node) => node.tierStart).map((node) => (
-          <text
-            key={`gate-${node.tier}`}
-            className="tier-gate"
-            x={node.x}
-            /* Opposite the node's own label, and far enough out to clear the
-               neighbouring node's label on that same side. */
-            y={node.labelBelow ? node.y - 8.5 : node.y + 10.5}
-            textAnchor="middle"
-          >
-            {TIER_LABELS[node.tier]}
-          </text>
-        ))}
+        {nodes.filter((node) => node.tierStart).map((node) => {
+          // Opposite the node's own label. Clamp the y so a gate on a low leg
+          // cannot slip past the viewBox bottom edge, and share the node's
+          // horizontal anchor so an edge-node gate does not overflow either.
+          const gateY = node.labelBelow ? node.y - 8.5 : Math.min(node.y + 10.5, VIEW_H - 2.5);
+          return (
+            <text
+              key={`gate-${node.tier}`}
+              className="tier-gate"
+              x={node.x + node.labelDx}
+              y={gateY}
+              textAnchor={node.anchor}
+            >
+              {TIER_LABELS[node.tier]}
+            </text>
+          );
+        })}
         {nodes.map((node) => {
           const cell = cellByTopic.get(node.topic);
           if (!cell) return null;
