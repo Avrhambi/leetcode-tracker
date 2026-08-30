@@ -9,6 +9,17 @@
 .xp-bar-topline { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-sm); margin-bottom: var(--space-2xs); font-size: var(--text-2xs); }
 .xp-bar-topline strong { color: var(--color-accent); font-family: var(--font-display); font-size: var(--text-base); line-height: 1; }
 .xp-bar-topline span { color: var(--color-neutral); }
+.xp-bar-lead { display: flex; align-items: baseline; gap: var(--space-xs); }
+/* Live consistency multiplier — grows with the streak, drops to hidden at ×1.0. */
+.xp-multiplier {
+  color: var(--color-accent);
+  font-family: var(--font-display);
+  font-size: var(--text-2xs);
+  padding: 0.05rem 0.3rem;
+  border: 1px solid color-mix(in oklch, var(--color-accent) 45%, transparent);
+  border-radius: var(--radius-card);
+  white-space: nowrap;
+}
 .xp-track { position: relative; height: 0.45rem; overflow: hidden; background: var(--color-rule); }
 .xp-fill { height: 100%; background: var(--color-accent); transition: width var(--dur-medium) var(--ease-out); }
 

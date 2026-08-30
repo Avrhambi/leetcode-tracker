@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { levelForXp, replayXp, snapshotForXp, xpForAttempt, xpForLevel } from './gamification';
+import { streakEndingOn } from './streak';
 import type { Attempt } from '../types/models';
 
 const attempt = (over: Partial<Attempt>): Attempt => ({
@@ -17,16 +18,25 @@ const attempt = (over: Partial<Attempt>): Attempt => ({
 });
 
 describe('xpForAttempt', () => {
-  it('awards the full quality-based amount on the first attempt of the day', () => {
-    expect(xpForAttempt('strong', true)).toBe(20);
-    expect(xpForAttempt('partial', true)).toBe(12);
-    expect(xpForAttempt('weak', true)).toBe(5);
+  it('awards the full quality-based amount on the first attempt of a ×1.0 streak day', () => {
+    expect(xpForAttempt('strong', true, 1)).toBe(20);
+    expect(xpForAttempt('partial', true, 2)).toBe(12);
+    expect(xpForAttempt('weak', true, 0)).toBe(5);
   });
 
   it('awards a quarter (rounded) for a same-day reinforcement pass', () => {
-    expect(xpForAttempt('strong', false)).toBe(5);
-    expect(xpForAttempt('partial', false)).toBe(3);
-    expect(xpForAttempt('weak', false)).toBe(1);
+    expect(xpForAttempt('strong', false, 1)).toBe(5);
+    expect(xpForAttempt('partial', false, 1)).toBe(3);
+    expect(xpForAttempt('weak', false, 1)).toBe(1);
+  });
+
+  it('scales by the streak-consistency multiplier, rounding once over the whole product', () => {
+    expect(xpForAttempt('strong', true, 3)).toBe(22); // 20 × 1.1
+    expect(xpForAttempt('strong', true, 7)).toBe(25); // 20 × 1.25
+    expect(xpForAttempt('strong', true, 14)).toBe(30); // 20 × 1.5
+    expect(xpForAttempt('strong', true, 999)).toBe(30); // ceiling holds
+    expect(xpForAttempt('partial', true, 3)).toBe(13); // round(12 × 1.1 = 13.2)
+    expect(xpForAttempt('weak', false, 7)).toBe(2); // round(5 × 0.25 × 1.25 = 1.5625)
   });
 });
 
@@ -79,13 +89,22 @@ describe('snapshotForXp', () => {
 });
 
 describe('replayXp', () => {
-  it('sums first-of-day XP across distinct problem-days', () => {
+  it('sums first-of-day XP across distinct problem-days (all ×1.0, streak < 3)', () => {
     const xp = replayXp([
       attempt({ problemId: 'p1', attemptedOn: '2026-08-01', quality: 'strong' }),
       attempt({ problemId: 'p2', attemptedOn: '2026-08-01', quality: 'weak' }),
       attempt({ problemId: 'p1', attemptedOn: '2026-08-02', quality: 'partial' })
     ]);
     expect(xp).toBe(20 + 5 + 12);
+  });
+
+  it('applies the consistency multiplier once the streak crosses a tier', () => {
+    // Five consecutive days, one strong attempt each. Days 1–2 ×1.0, days 3–5 ×1.1.
+    const days = ['2026-08-01', '2026-08-02', '2026-08-03', '2026-08-04', '2026-08-05'];
+    const xp = replayXp(days.map((d, i) => attempt({
+      problemId: `p${i}`, attemptedOn: d, quality: 'strong', createdAt: `${d}T09:00:00.000Z`
+    })));
+    expect(xp).toBe(20 + 20 + 22 + 22 + 22);
   });
 
   it('discounts a same-day repeat regardless of insertion order', () => {
@@ -110,11 +129,15 @@ describe('replayXp', () => {
       attempt({ id: 'd', problemId: 'p1', attemptedOn: '2026-07-30', quality: 'strong', createdAt: '2026-08-03T09:00:00.000Z' })
     ];
 
+    // Mirror saveAttempt: fold in createdAt order, accumulating active dates, and
+    // compute the streak-ending-on multiplier from the dates seen so far.
     let liveTotal = 0;
     const stored: Attempt[] = [];
+    const activeDates = new Set<string>();
     for (const next of history) {
       const isFirstOfDay = !stored.some((a) => a.problemId === next.problemId && a.attemptedOn === next.attemptedOn);
-      liveTotal += xpForAttempt(next.quality, isFirstOfDay);
+      activeDates.add(next.attemptedOn);
+      liveTotal += xpForAttempt(next.quality, isFirstOfDay, streakEndingOn(activeDates, next.attemptedOn));
       stored.push(next);
     }
 

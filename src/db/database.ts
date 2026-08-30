@@ -53,3 +53,21 @@ db.version(3).stores(storesV3).upgrade(async (tx) => {
     updatedAt: new Date().toISOString()
   });
 });
+
+// v4: the XP formula gains a streak-consistency multiplier (see
+// services/constants.ts). Stored lifetime XP no longer equals
+// `replayXp(attempts)` for anyone who practised under v3, so re-replay it with
+// the new formula. This is a one-time retroactive XP *increase* — a possible
+// level bump, never a loss. A fresh install is created at v4 and skips this.
+// `replayXp` still reads only attempt rows, so backup restore's fallback call
+// (backup.ts) picks up the new formula for free.
+db.version(4).stores(storesV3).upgrade(async (tx) => {
+  const attempts = await tx.table<Attempt>('attempts').toArray();
+  const row = await tx.table<GamificationState>('gamification').get('state');
+  await tx.table<GamificationState>('gamification').put({
+    key: 'state',
+    xp: replayXp(attempts),
+    badges: row?.badges ?? [],
+    updatedAt: new Date().toISOString()
+  });
+});

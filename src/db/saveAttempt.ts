@@ -30,17 +30,22 @@ export async function saveAttempt(input: AttemptInput): Promise<void> {
     await db.attempts.add(attempt);
     await db.progress.put({ ...progressAfterAttempt(existing, attempt.quality, input.attemptedOn, createdAt, alreadyAttemptedToday), problemId: input.problemId });
 
+    // Read the full attempt set once (now including the row just added) — it feeds
+    // both the XP streak multiplier and the badge/streak checks below.
+    const [progress, attempts, problems, settings] = await Promise.all([
+      db.progress.toArray(), db.attempts.toArray(), db.problems.toArray(), db.settings.toArray()
+    ]);
+    const activeDates = new Set(attempts.map((row) => row.attemptedOn));
+
     // Award XP in the same transaction so it is atomic with the attempt write.
-    // `isFirstOfDay` is the negation of the same-day guard above, so the v3
-    // replay (which recomputes it from attempt rows) lands on the same total.
-    await awardAttemptXp(attempt.quality, !alreadyAttemptedToday, now);
+    // `isFirstOfDay` is the negation of the same-day guard above; the grace-free
+    // streak ending on `attemptedOn` applies the consistency multiplier. Both
+    // inputs are reconstructible from attempt rows, so the v4 replay agrees.
+    await awardAttemptXp(attempt.quality, !alreadyAttemptedToday, input.attemptedOn, activeDates, now);
 
     // Badge check runs after the progress write so predicates see fresh state.
     // The catalog and settings feed topic-completeness and the streak length;
     // recordBadges unions into the stored set, so this only ever adds.
-    const [progress, attempts, problems, settings] = await Promise.all([
-      db.progress.toArray(), db.attempts.toArray(), db.problems.toArray(), db.settings.toArray()
-    ]);
     const { streak } = currentStreak(new Set(attempts.map((row) => row.attemptedOn)), graceStateFrom(settings), now);
     await recordBadges(badgesEarned({ progress, attempts, problems, currentStreakDays: streak }), now);
     // Recording an attempt from either entry point (daily plan or catalog)

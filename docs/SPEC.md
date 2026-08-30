@@ -48,16 +48,26 @@ The grace refresh cadence (`refreshGrace`: one grant per rolling seven active da
 
 ## XP and levels
 Every recorded attempt awards XP inside the same transaction that writes the
-attempt: 20 / 12 / 5 for a strong / partial / weak first attempt of the day on
-that problem, and a quarter of that (5 / 3 / 1) for a later same-day attempt on
-the same problem. There is no bonus for a new problem versus a review — the award
-is a pure function of the stored attempt row, so lifetime XP can be rebuilt
-exactly by replaying the attempt history (done once by the Dexie `version(3)`
-upgrade for existing users, and on backup restore when the payload predates
-gamification). Level is `floor(sqrt(xp / 50))` — 50 XP to level 1, 200 to 2, 450
-to 3 — and is derived on read, never stored. The workbench shows a level / XP
-strip at the top; its fill bar transitions on XP change (clamped by
-`prefers-reduced-motion`). When the level rises while the strip is on screen,
+attempt. The base is 20 / 12 / 5 for a strong / partial / weak first attempt of
+the day on that problem, and a quarter of that for a later same-day attempt on
+the same problem. That amount is then scaled by a **consistency multiplier** keyed
+to the current streak length — the run of consecutive calendar days with at least
+one attempt, ending on this attempt's date: ×1.0 for a 1–2 day streak, ×1.1 at
+3–6, ×1.25 at 7–13, ×1.5 at 14+ (a hard ceiling). The final award is one
+`Math.round` over `base × repeatFactor × streakMultiplier`. The multiplier uses a
+**grace-free** streak (`streakEndingOn`, not `currentStreak`) precisely because it
+must be reconstructible from the attempt rows alone: so when grace has bridged a
+gap, the streak shown on the stat strip can be longer than the one driving XP.
+There is no bonus for a new problem versus a review — the award is a pure function
+of the attempt rows, so lifetime XP can be rebuilt exactly by replaying the
+history. The Dexie `version(3)` upgrade did this once for existing users; the
+`version(4)` upgrade re-runs the replay with the multiplier formula, a one-time
+retroactive XP increase (possible level bump, never a loss). Backup restore
+replays the same way when the payload predates gamification. Level is
+`floor(sqrt(xp / 50))` — 50 XP to level 1, 200 to 2, 450 to 3 — and is derived on
+read, never stored. The workbench shows a level / XP strip at the top; when the
+streak multiplier is above ×1.0 a live `×N XP` chip sits next to the level. Its
+fill bar transitions on XP change (clamped by `prefers-reduced-motion`). When the level rises while the strip is on screen,
 a one-shot pulse plays; a level-up that happens while the strip is unmounted
 (e.g. the Settings overlay is open) is not replayed — nothing stores what was
 last announced.

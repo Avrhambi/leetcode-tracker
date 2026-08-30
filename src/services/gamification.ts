@@ -1,5 +1,6 @@
 import type { Attempt, Quality } from '../types/models';
-import { XP_BY_QUALITY, XP_PER_LEVEL_UNIT, XP_REPEAT_SAME_DAY_MULTIPLIER } from './constants';
+import { XP_BY_QUALITY, XP_PER_LEVEL_UNIT, XP_REPEAT_SAME_DAY_MULTIPLIER, xpStreakMultiplier } from './constants';
+import { streakEndingOn } from './streak';
 
 // Pure XP and level rules. No storage, no Dexie — `db/gamification.ts` owns I/O.
 // Everything here is a function of a stored `Attempt` row (or a list of them),
@@ -14,9 +15,15 @@ export interface GamificationSnapshot {
 
 // XP for one attempt. `isFirstOfDay` is false when another attempt for the same
 // problem already exists on the same calendar day (a reinforcement pass).
-export function xpForAttempt(quality: Quality, isFirstOfDay: boolean): number {
+// `streakDays` is the grace-free consecutive-active-day count ending on the
+// attempt's date (see `streakEndingOn`) — it applies the consistency multiplier.
+//
+// One `Math.round` over the whole product: composing a round per factor would let
+// the live award and the `replayXp` fold drift apart by ±1 XP per attempt.
+export function xpForAttempt(quality: Quality, isFirstOfDay: boolean, streakDays: number): number {
   const base = XP_BY_QUALITY[quality];
-  return isFirstOfDay ? base : Math.round(base * XP_REPEAT_SAME_DAY_MULTIPLIER);
+  const repeatFactor = isFirstOfDay ? 1 : XP_REPEAT_SAME_DAY_MULTIPLIER;
+  return Math.round(base * repeatFactor * xpStreakMultiplier(streakDays));
 }
 
 // level = floor(sqrt(xp / unit)). Monotonic; level 0 at 0 XP.
@@ -50,6 +57,11 @@ export function snapshotForXp(xp: number): GamificationSnapshot {
 // `attemptedOn` date.
 export function replayXp(attempts: Attempt[]): number {
   const seenByDay = new Set<string>();
+  // Active dates accumulate as we fold forward, so the streak multiplier for an
+  // attempt is computed against exactly the dates the live path would have seen
+  // by the time that attempt was saved. The attempt's own date is added BEFORE
+  // its multiplier is read (day 1 of a streak = ×1.0 per the tier table).
+  const activeDates = new Set<string>();
   let xp = 0;
   // Sort by createdAt, then id, so two attempts sharing a timestamp always replay
   // in the same order the live path awarded them (which reads rows one at a time
@@ -60,7 +72,8 @@ export function replayXp(attempts: Attempt[]): number {
     const dayKey = `${attempt.problemId} ${attempt.attemptedOn}`;
     const isFirstOfDay = !seenByDay.has(dayKey);
     seenByDay.add(dayKey);
-    xp += xpForAttempt(attempt.quality, isFirstOfDay);
+    activeDates.add(attempt.attemptedOn);
+    xp += xpForAttempt(attempt.quality, isFirstOfDay, streakEndingOn(activeDates, attempt.attemptedOn));
   }
   return xp;
 }

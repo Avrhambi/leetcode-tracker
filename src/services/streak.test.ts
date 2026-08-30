@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { currentStreak, refreshGrace, type StreakGraceState } from './streak';
+import { currentStreak, refreshGrace, streakEndingOn, type StreakGraceState } from './streak';
 
 const grace = (remaining: number, refreshedOn = '2026-07-01'): StreakGraceState => ({ graceRemaining: remaining, graceRefreshedOn: refreshedOn });
 const dates = (...list: string[]) => new Set(list);
@@ -15,6 +15,24 @@ describe('currentStreak', () => {
   it('still counts when today has no attempt yet (streak up to the last active day)', () => {
     const result = currentStreak(dates('2026-07-17', '2026-07-18'), grace(0), at('2026-07-19'));
     expect(result.streak).toBe(2);
+  });
+});
+
+describe('streakEndingOn', () => {
+  it('counts consecutive active days ending on the given date, inclusive', () => {
+    expect(streakEndingOn(dates('2026-07-17', '2026-07-18', '2026-07-19'), '2026-07-19')).toBe(3);
+  });
+
+  it('is 0 when the end date itself has no attempt', () => {
+    expect(streakEndingOn(dates('2026-07-17', '2026-07-18'), '2026-07-19')).toBe(0);
+  });
+
+  it('stops at the first gap and ignores grace entirely', () => {
+    expect(streakEndingOn(dates('2026-07-15', '2026-07-16', '2026-07-19'), '2026-07-19')).toBe(1);
+  });
+
+  it('crosses a month boundary', () => {
+    expect(streakEndingOn(dates('2026-07-30', '2026-07-31', '2026-08-01'), '2026-08-01')).toBe(3);
   });
 
   it('breaks on a gap with no grace left', () => {

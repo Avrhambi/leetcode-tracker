@@ -9,6 +9,14 @@ import { skipRecommendation } from './db/recommendations';
 import { seedCatalog } from './db/seedCatalog';
 import { useDailyPlan } from './hooks/useDailyPlan';
 import { useGamification } from './hooks/useGamification';
+import { streakEndingOn } from './services/streak';
+
+function localDate(date = new Date()): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
 
 export default function App() {
   const problems = useLiveQuery(() => db.problems.orderBy('neetcodeOrder').toArray(), []);
@@ -32,13 +40,16 @@ export default function App() {
   if (!problems || !progress || !attempts || !settings) return <main><p>Loading catalog…</p></main>;
 
   const progressByProblem = new Map(progress.map((item) => [item.problemId, item.status]));
+  // Grace-free streak ending today — the number that drives the XP multiplier on
+  // the award path, so the ×N chip on the bar matches what an attempt would earn.
+  const streakDays = streakEndingOn(new Set(attempts.map((a) => a.attemptedOn)), localDate());
 
   return <main>
     <header className="app-header">
       <div className="app-intro">
         <h1>LeetCode Tracker</h1>
       </div>
-      {gamification && <GamificationBar snapshot={gamification} />}
+      {gamification && <GamificationBar snapshot={gamification} streakDays={streakDays} />}
       {gamification && <BadgeShelf earned={gamification.badges} />}
       <button type="button" className="settings-toggle" onClick={() => setSettingsOpen(true)}>Settings</button>
     </header>

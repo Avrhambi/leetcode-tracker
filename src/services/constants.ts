@@ -29,6 +29,29 @@ export const XP_BY_QUALITY = { strong: 20, partial: 12, weak: 5 } as const;
 // reinforcement, not fresh progress — it earns a token fraction of the XP.
 export const XP_REPEAT_SAME_DAY_MULTIPLIER = 0.25;
 
+// Consistency multiplier: the current streak length (consecutive active days
+// ending on the attempt's date — grace-free, so it is reconstructible from the
+// `attempts` history alone and the v4 replay agrees with the live award) scales
+// the XP for that attempt. Breaking a streak visibly slows leveling.
+//
+// Tiers keyed by `[minStreakDays, multiplier]`, highest applicable wins. The last
+// entry is the hard ceiling — a longer streak never multiplies by more than 1.5.
+export const XP_STREAK_MULTIPLIER_TIERS = [
+  [0, 1.0],
+  [3, 1.1],
+  [7, 1.25],
+  [14, 1.5]
+] as const;
+
+// Multiplier for a streak of `streakDays` consecutive active days.
+export function xpStreakMultiplier(streakDays: number): number {
+  let multiplier = 1.0;
+  for (const [min, value] of XP_STREAK_MULTIPLIER_TIERS) {
+    if (streakDays >= min) multiplier = value;
+  }
+  return multiplier;
+}
+
 // Level curve: gentle square-root growth. level = floor(sqrt(xp / XP_PER_LEVEL_UNIT)),
 // so level 1 at 50 XP, level 2 at 200, level 3 at 450, level 4 at 800.
 export const XP_PER_LEVEL_UNIT = 50;

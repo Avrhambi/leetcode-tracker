@@ -110,8 +110,11 @@ export const dexieStores = {
 // re-derives usage from the active dates, so reset / v1-restore need no reseed.
 // v3 adds the `gamification` store and seeds it by replaying lifetime XP from the
 // full `attempts` history (its own version — Dexie never re-runs a v2 upgrade for
-// an existing v2 user). Fresh installs are created at v3 and skip the callback;
-// the reader defaults to { xp: 0 } when the row is absent.
+// an existing v2 user). Fresh installs are created at the highest version and skip
+// every callback; the reader defaults to { xp: 0 } when the row is absent.
+// v4 re-replays lifetime XP after the streak-consistency multiplier was added to
+// the formula (stored v3 XP no longer equals replayXp(attempts)) — a one-time
+// retroactive increase, no index change.
 ```
 
 ### XP and levels
@@ -122,16 +125,23 @@ first attempt for that problem on that calendar day. No new-vs-review multiplier
 `kind` lives on `RecommendationEvent`, not `Attempt`, so the v3 replay could not
 reconstruct it.
 
-| quality | first of day | same-day repeat |
-|---------|--------------|-----------------|
-| strong  | 20           | 5               |
-| partial | 12           | 3               |
-| weak    | 5            | 1               |
+| quality | first of day (base) | same-day repeat (base) |
+|---------|---------------------|------------------------|
+| strong  | 20                  | 5                      |
+| partial | 12                  | 3                      |
+| weak    | 5                   | 1                      |
+
+The base is then scaled by a streak-consistency multiplier and rounded once:
+`round(base × repeatFactor × xpStreakMultiplier(streakDays))`, where `streakDays`
+is `streakEndingOn(activeDates, attemptedOn)` — grace-free consecutive active days
+ending on the attempt's date, so it is reconstructible from attempt rows alone.
+Multiplier: ×1.0 (streak 1–2), ×1.1 (3–6), ×1.25 (7–13), ×1.5 (14+, ceiling).
 
 `level = floor(sqrt(xp / 50))` — level 1 at 50 XP, 2 at 200, 3 at 450, 4 at 800.
 `replayXp(attempts)` folds the whole history (sorted by `createdAt` then `id` for
-a deterministic result) and is shared by the v3 upgrade and by backup restore
-when the payload carries no gamification row.
+a deterministic result), accumulating active dates as it goes so each attempt's
+multiplier matches what the live path saw. Shared by the v3 and v4 upgrades and by
+backup restore when the payload carries no gamification row.
 
 ### Badges
 

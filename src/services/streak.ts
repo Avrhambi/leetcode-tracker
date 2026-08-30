@@ -24,6 +24,25 @@ function toKey(date: Date): string {
   return [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')].join('-');
 }
 
+// Consecutive active days ending on `endDate` (inclusive), with NO grace. Walks
+// back one calendar day at a time until a gap. Unlike `currentStreak`, this is a
+// pure function of `activeDates` + `endDate` — no persisted grace clock — so the
+// XP award path and the `replayXp` fold agree by construction, keeping lifetime
+// XP reconstructible from the `attempts` history alone.
+//
+// If `endDate` itself has no attempt the streak is 0 (the caller passes the
+// attempt's own `attemptedOn`, which is always active by the time this is used).
+export function streakEndingOn(activeDates: Set<string>, endDate: string): number {
+  const parts = endDate.split('-').map(Number);
+  const cursor = new Date(parts[0], parts[1] - 1, parts[2]);
+  let streak = 0;
+  while (activeDates.has(toKey(cursor))) {
+    streak += 1;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  return streak;
+}
+
 // Refresh the grace allowance: grant STREAK_GRACE_PER_WEEK once every
 // STREAK_GRACE_ACTIVE_DAYS_PER_GRANT active days. `activeDates` is the set of
 // YYYY-MM-DD strings on which the user recorded at least one attempt.
