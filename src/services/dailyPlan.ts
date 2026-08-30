@@ -41,12 +41,16 @@ function jitter(seed: string): number {
 }
 
 // Number of review / new slots given how many reviews are due today. Always at
-// least one new problem so fresh material never disappears; grows the plan to
-// absorb a review backlog (2 items on a clean day, up to 4 when heavily behind).
+// least one new problem so fresh material never disappears, and the plan never
+// *shrinks* as the backlog grows — total slots step 2 → 3 → 3 → 4 as due count
+// rises. A large backlog is drained through the review-queue panel, not by
+// inflating the daily plan past four, so every user — brand new, caught up, or
+// behind — gets a comparably sized, review-first plan.
 function planSlots(dueCount: number): { reviewSlots: number; newSlots: number } {
-  const reviewSlots = dueCount === 0 ? 0 : dueCount <= 2 ? 1 : dueCount <= 5 ? 2 : 3;
-  const newSlots = dueCount <= 1 ? 2 : 1;
-  return { reviewSlots, newSlots };
+  if (dueCount === 0) return { reviewSlots: 0, newSlots: 2 };
+  if (dueCount <= 2) return { reviewSlots: 1, newSlots: 2 };
+  if (dueCount <= 5) return { reviewSlots: 2, newSlots: 1 };
+  return { reviewSlots: 3, newSlots: 1 };
 }
 
 export function selectDailyPlan({ problems, progress, recommendationEvents, now = new Date() }: DailyPlanInput): DailyPlanItem[] {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { selectDailyPlan } from './dailyPlan';
+import { catalog } from '../data/catalog';
 import type { CatalogProblem, ProblemProgress, RecommendationEvent } from '../types/models';
 
 const problems: CatalogProblem[] = [
@@ -79,5 +80,16 @@ describe('daily plan selection', () => {
     expect(result.some((item) => item.kind === 'new')).toBe(true);
     expect(result.length).toBeGreaterThanOrEqual(2);
     expect(result.length).toBeLessThanOrEqual(4);
+  });
+  it('never shrinks the plan as the review backlog grows', () => {
+    // Over the real catalog so fillNewProblems always has candidates. Every user
+    // — no backlog, small backlog, large backlog — gets a plan at least as big
+    // as a user with a smaller backlog, and always review-first.
+    const due = (count: number) => catalog.slice(0, count).map((problem) => progress(problem.id, { nextReviewDate: '2026-07-18', lastQuality: 'strong' }));
+    const sizes = [0, 1, 2, 4, 8].map((count) => selectDailyPlan({ problems: catalog, progress: due(count), recommendationEvents: [], now }).length);
+    for (let index = 1; index < sizes.length; index += 1) {
+      expect(sizes[index]).toBeGreaterThanOrEqual(sizes[index - 1]);
+    }
+    expect(sizes).toEqual([2, 3, 3, 3, 4]);
   });
 });
