@@ -1,6 +1,7 @@
 import { db } from './database';
 import { mergeBadges } from '../services/badges';
 import { xpForAttempt } from '../services/gamification';
+import { streakEndingOn } from '../services/streak';
 import type { BadgeId } from '../services/constants';
 import type { GamificationState, Quality } from '../types/models';
 
@@ -18,12 +19,22 @@ export async function readGamification(): Promise<Required<GamificationState>> {
 
 // Award XP for one attempt, inside a caller-supplied transaction so the write is
 // atomic with the attempt/progress writes in `saveAttempt`. `isFirstOfDay` is
-// false for a same-day reinforcement pass.
-export async function awardAttemptXp(quality: Quality, isFirstOfDay: boolean, now: Date): Promise<void> {
+// false for a same-day reinforcement pass. `attemptedOn` + `priorActiveDates`
+// (the set of dates the user was already active on, INCLUDING this attempt's
+// date) drive the grace-free streak multiplier — the same inputs `replayXp`
+// reconstructs, so the v4 replay lands on the same lifetime total.
+export async function awardAttemptXp(
+  quality: Quality,
+  isFirstOfDay: boolean,
+  attemptedOn: string,
+  activeDates: Set<string>,
+  now: Date
+): Promise<void> {
   const current = (await db.gamification.get('state')) ?? DEFAULT_STATE;
+  const streakDays = streakEndingOn(activeDates, attemptedOn);
   await db.gamification.put({
     key: 'state',
-    xp: current.xp + xpForAttempt(quality, isFirstOfDay),
+    xp: current.xp + xpForAttempt(quality, isFirstOfDay, streakDays),
     badges: current.badges ?? [],
     updatedAt: now.toISOString()
   });

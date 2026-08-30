@@ -9,6 +9,17 @@
 .xp-bar-topline { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-sm); margin-bottom: var(--space-2xs); font-size: var(--text-2xs); }
 .xp-bar-topline strong { color: var(--color-accent); font-family: var(--font-display); font-size: var(--text-base); line-height: 1; }
 .xp-bar-topline span { color: var(--color-neutral); }
+.xp-bar-lead { display: flex; align-items: baseline; gap: var(--space-xs); }
+/* Live consistency multiplier — grows with the streak, drops to hidden at ×1.0. */
+.xp-multiplier {
+  color: var(--color-accent);
+  font-family: var(--font-display);
+  font-size: var(--text-2xs);
+  padding: 0.05rem 0.3rem;
+  border: 1px solid color-mix(in oklch, var(--color-accent) 45%, transparent);
+  border-radius: var(--radius-card);
+  white-space: nowrap;
+}
 .xp-track { position: relative; height: 0.45rem; overflow: hidden; background: var(--color-rule); }
 .xp-fill { height: 100%; background: var(--color-accent); transition: width var(--dur-medium) var(--ease-out); }
 
@@ -31,13 +42,16 @@
    A row of marks in the app header. Each badge's label and hint ride along in the
    tooltip and the SVG's accessible name, since there is no room for cards. An
    earned mark is filled; a locked one is a dim outline. */
-.badge-strip { display: flex; align-items: center; gap: var(--space-2xs); padding: var(--space-2xs) var(--space-xs); margin: 0; list-style: none; border: var(--rule-hair) solid var(--color-rule); }
+/* The strip can outgrow the header slot (13 marks); it scrolls inside its own
+   box so the page itself never gains a scrollbar. */
+.badge-strip-scroll { min-width: 0; overflow-x: auto; }
+.badge-strip { display: flex; align-items: center; gap: var(--space-2xs); padding: var(--space-2xs) var(--space-xs); margin: 0; list-style: none; border: var(--rule-hair) solid var(--color-rule); width: max-content; }
 .milestone { display: grid; place-items: center; }
 .milestone.locked { opacity: 0.45; }
 .milestone.earned.fresh { animation: badge-reveal 600ms var(--ease-out) 1; }
 .milestone-mark { display: block; width: 1.25rem; height: 1.25rem; }
-.milestone-mark polygon, .milestone-mark circle, .milestone-mark rect { fill: var(--color-accent); stroke: var(--color-accent); stroke-width: 6; }
-.milestone.locked .milestone-mark polygon, .milestone.locked .milestone-mark circle, .milestone.locked .milestone-mark rect { fill: none; stroke: var(--color-rule-2); }
+.milestone-mark polygon, .milestone-mark circle, .milestone-mark rect, .milestone-mark path { fill: var(--color-accent); stroke: var(--color-accent); stroke-width: 4; stroke-linejoin: round; }
+.milestone.locked .milestone-mark polygon, .milestone.locked .milestone-mark circle, .milestone.locked .milestone-mark rect, .milestone.locked .milestone-mark path { fill: none; stroke: var(--color-rule-2); }
 
 @keyframes badge-reveal {
   0% { transform: translateY(0.5rem); opacity: 0; }

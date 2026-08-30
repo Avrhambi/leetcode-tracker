@@ -1,17 +1,23 @@
 import { useEffect, useRef, useState } from 'react';
 import type { GamificationSnapshot } from '../services/gamification';
+import { xpStreakMultiplier } from '../services/constants';
 
 interface GamificationBarProps {
   snapshot: GamificationSnapshot;
+  // Grace-free consecutive-active-day count ending today — the same number that
+  // drives the XP multiplier on the award path. 0 when the user is not on a
+  // streak today.
+  streakDays: number;
 }
 
 // Minimal XP / level strip. The fill width transitions on XP change. When the
 // level rises while this component is mounted, a one-shot pulse plays; a level-up
 // that happened while the user was on another screen is not replayed (nothing
 // stores what was last announced — an accepted limitation, see docs/SPEC.md).
-export function GamificationBar({ snapshot }: GamificationBarProps) {
+export function GamificationBar({ snapshot, streakDays }: GamificationBarProps) {
   const { level, xp, xpIntoLevel, xpForNextLevel } = snapshot;
   const pct = xpForNextLevel > 0 ? Math.round((xpIntoLevel / xpForNextLevel) * 100) : 100;
+  const multiplier = xpStreakMultiplier(streakDays);
 
   const previousLevel = useRef(level);
   const [leveled, setLeveled] = useState(false);
@@ -32,7 +38,14 @@ export function GamificationBar({ snapshot }: GamificationBarProps) {
 
   return <article className="xp-bar" data-leveled={leveled} aria-label={`Level ${level}, ${xp} total XP`}>
     <div className="xp-bar-topline">
-      <strong>Lv {level}</strong>
+      <span className="xp-bar-lead">
+        <strong>Lv {level}</strong>
+        {multiplier > 1 && (
+          <span className="xp-multiplier" title={`${streakDays}-day streak — attempts earn ${multiplier}× XP today`}>
+            ×{multiplier} XP
+          </span>
+        )}
+      </span>
       <span>{xpIntoLevel} / {xpForNextLevel} XP to level {level + 1}</span>
     </div>
     <div className="xp-track" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>

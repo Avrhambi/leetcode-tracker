@@ -20,36 +20,67 @@ const attempt = (problemId: string): Attempt => ({
 });
 
 const twoTopics = [problem('a1', 'Arrays'), problem('a2', 'Arrays'), problem('t1', 'Trees')];
+const base = { progress: [], attempts: [], problems: twoTopics, currentStreakDays: 0, level: 0 };
 
 describe('badgesEarned', () => {
   it('grants nothing for an empty profile', () => {
-    expect(badgesEarned({ progress: [], attempts: [], problems: twoTopics, currentStreakDays: 0 })).toEqual([]);
+    expect(badgesEarned(base)).toEqual([]);
+  });
+
+  it('does not grant all-mastered on an empty catalog (vacuous every)', () => {
+    expect(badgesEarned({ ...base, problems: [] })).not.toContain('all-mastered');
   });
 
   it('grants first-solve on any solved problem', () => {
-    const earned = badgesEarned({ progress: [prog('a1', 'solved')], attempts: [attempt('a1')], problems: twoTopics, currentStreakDays: 1 });
+    const earned = badgesEarned({ ...base, progress: [prog('a1', 'solved')], attempts: [attempt('a1')], currentStreakDays: 1 });
     expect(earned).toContain('first-solve');
     expect(earned).not.toContain('first-mastered');
   });
 
   it('grants first-mastered and topic-cleared only when every problem in a topic is mastered', () => {
-    const partial = badgesEarned({ progress: [prog('a1', 'mastered'), prog('a2', 'solved')], attempts: [], problems: twoTopics, currentStreakDays: 0 });
+    const partial = badgesEarned({ ...base, progress: [prog('a1', 'mastered'), prog('a2', 'solved')] });
     expect(partial).toContain('first-mastered');
     expect(partial).not.toContain('topic-cleared');
 
-    const full = badgesEarned({ progress: [prog('a1', 'mastered'), prog('a2', 'mastered')], attempts: [], problems: twoTopics, currentStreakDays: 0 });
+    const full = badgesEarned({ ...base, progress: [prog('a1', 'mastered'), prog('a2', 'mastered')] });
     expect(full).toContain('topic-cleared');
   });
 
-  it('grants ten-day-streak exactly at ten days, not at nine', () => {
-    const base = { progress: [], attempts: [], problems: twoTopics };
+  it('grants all-mastered only when every catalog problem is mastered', () => {
+    const notAll = badgesEarned({ ...base, progress: [prog('a1', 'mastered'), prog('a2', 'mastered')] });
+    expect(notAll).not.toContain('all-mastered');
+    const all = badgesEarned({ ...base, progress: [prog('a1', 'mastered'), prog('a2', 'mastered'), prog('t1', 'mastered')] });
+    expect(all).toContain('all-mastered');
+    expect(all).not.toContain('five-topics-cleared'); // only 2 topics in this catalog
+  });
+
+  it('grants five-topics-cleared at five fully-mastered topics', () => {
+    const problems = Array.from({ length: 5 }, (_, i) => problem(`x${i}`, `T${i}`));
+    const notYet = badgesEarned({ ...base, problems, progress: problems.slice(0, 4).map((p) => prog(p.id, 'mastered')) });
+    expect(notYet).not.toContain('five-topics-cleared');
+    const cleared = badgesEarned({ ...base, problems, progress: problems.map((p) => prog(p.id, 'mastered')) });
+    expect(cleared).toContain('five-topics-cleared');
+  });
+
+  it('grants the streak tiers at their exact thresholds', () => {
+    expect(badgesEarned({ ...base, currentStreakDays: 6 })).not.toContain('week-streak');
+    expect(badgesEarned({ ...base, currentStreakDays: 7 })).toContain('week-streak');
     expect(badgesEarned({ ...base, currentStreakDays: 9 })).not.toContain('ten-day-streak');
     expect(badgesEarned({ ...base, currentStreakDays: 10 })).toContain('ten-day-streak');
+    expect(badgesEarned({ ...base, currentStreakDays: 30 })).toContain('month-streak');
+    expect(badgesEarned({ ...base, currentStreakDays: 100 })).toEqual(
+      expect.arrayContaining(['week-streak', 'ten-day-streak', 'month-streak', 'century-streak'])
+    );
+  });
+
+  it('grants the level badges at their exact thresholds', () => {
+    expect(badgesEarned({ ...base, level: 4 })).not.toContain('level-5');
+    expect(badgesEarned({ ...base, level: 5 })).toContain('level-5');
+    expect(badgesEarned({ ...base, level: 10 })).toEqual(expect.arrayContaining(['level-5', 'level-10']));
   });
 
   it('grants half-catalog at 75 attempted problems and century at 100', () => {
     const mk = (n: number) => Array.from({ length: n }, (_, i) => attempt(`p${i}`));
-    const base = { progress: [], problems: twoTopics, currentStreakDays: 0 };
     const at74 = badgesEarned({ ...base, attempts: mk(74) });
     expect(at74).not.toContain('half-catalog');
     const at75 = badgesEarned({ ...base, attempts: mk(75) });
@@ -60,7 +91,7 @@ describe('badgesEarned', () => {
 
   it('counts distinct problems, not attempt rows, for the catalog milestones', () => {
     const manyAttemptsOneProblem = Array.from({ length: 80 }, () => attempt('a1'));
-    expect(badgesEarned({ progress: [], attempts: manyAttemptsOneProblem, problems: twoTopics, currentStreakDays: 0 })).not.toContain('half-catalog');
+    expect(badgesEarned({ ...base, attempts: manyAttemptsOneProblem })).not.toContain('half-catalog');
   });
 });
 

@@ -48,31 +48,51 @@ The grace refresh cadence (`refreshGrace`: one grant per rolling seven active da
 
 ## XP and levels
 Every recorded attempt awards XP inside the same transaction that writes the
-attempt: 20 / 12 / 5 for a strong / partial / weak first attempt of the day on
-that problem, and a quarter of that (5 / 3 / 1) for a later same-day attempt on
-the same problem. There is no bonus for a new problem versus a review — the award
-is a pure function of the stored attempt row, so lifetime XP can be rebuilt
-exactly by replaying the attempt history (done once by the Dexie `version(3)`
-upgrade for existing users, and on backup restore when the payload predates
-gamification). Level is `floor(sqrt(xp / 50))` — 50 XP to level 1, 200 to 2, 450
-to 3 — and is derived on read, never stored. The workbench shows a level / XP
-strip at the top; its fill bar transitions on XP change (clamped by
-`prefers-reduced-motion`). When the level rises while the strip is on screen,
+attempt. The base is 20 / 12 / 5 for a strong / partial / weak first attempt of
+the day on that problem, and a quarter of that for a later same-day attempt on
+the same problem. That amount is then scaled by a **consistency multiplier** keyed
+to the current streak length — the run of consecutive calendar days with at least
+one attempt, ending on this attempt's date: ×1.0 for a 1–2 day streak, ×1.1 at
+3–6, ×1.25 at 7–13, ×1.5 at 14+ (a hard ceiling). The final award is one
+`Math.round` over `base × repeatFactor × streakMultiplier`. The multiplier uses a
+**grace-free** streak (`streakEndingOn`, not `currentStreak`) precisely because it
+must be reconstructible from the attempt rows alone: so when grace has bridged a
+gap, the streak shown on the stat strip can be longer than the one driving XP.
+There is no bonus for a new problem versus a review — the award is a pure function
+of the attempt rows, so lifetime XP can be rebuilt exactly by replaying the
+history. The Dexie `version(3)` upgrade did this once for existing users; the
+`version(4)` upgrade re-runs the replay with the multiplier formula, a one-time
+retroactive XP increase (possible level bump, never a loss). Backup restore
+replays the same way when the payload predates gamification. Level is
+`floor(sqrt(xp / 50))` — 50 XP to level 1, 200 to 2, 450 to 3 — and is derived on
+read, never stored. The workbench shows a level / XP strip at the top; when the
+streak multiplier is above ×1.0 a live `×N XP` chip sits next to the level. Its
+fill bar transitions on XP change (clamped by `prefers-reduced-motion`). When the level rises while the strip is on screen,
 a one-shot pulse plays; a level-up that happens while the strip is unmounted
 (e.g. the Settings overlay is open) is not replayed — nothing stores what was
 last announced.
 
 ## Badges
-Six milestone badges: first solve, first mastered, topic cleared (every problem
-in one topic mastered), ten-day streak, halfway (75 distinct problems attempted),
-century (100). Each is a pure predicate over progress, attempts, the catalog, and
-the current streak length, checked after every attempt save. The earned set is
-stored as a monotonic union — once a badge is earned it is never lost, even when
-a later weak attempt resets the review stage that earned it. The header shows a
-compact strip of all six marks (filled when earned, dim outline when locked); a
-badge that unlocks while the strip is mounted gets a one-shot reveal fade. On
-restore of a backup that has no badge data, the strip starts all-locked and
-re-fills on the next attempt.
+Thirteen milestone badges — the named checkpoints across the progression axes:
+
+- **First steps:** first solve, first mastered.
+- **Consistency:** week streak (7 days in a row), ten-day streak, month streak
+  (30), hundred-day streak (100).
+- **Mastery:** topic cleared (every problem in one topic mastered), five topics
+  cleared, all mastered (all 150).
+- **Volume:** halfway (75 distinct problems attempted), century (100).
+- **Level:** level 5, level 10.
+
+Each is a pure, monotonic predicate over progress, attempts, the catalog, the
+current streak length (grace-inclusive — the streak badges follow the displayed
+streak, not the XP one), and the post-attempt level, checked after every attempt
+save. The earned set is stored as a monotonic union — once a badge is earned it
+is never lost, even when a later weak attempt resets a review stage or a streak
+breaks. The header shows a compact strip of all thirteen marks (filled when
+earned, dim outline when locked; the strip can scroll inside its own box if the
+header row is ever too tight, so the page itself never does); a badge that unlocks while the strip is mounted
+gets a one-shot reveal fade. On restore of a backup that has no badge data, the
+strip starts all-locked and re-fills on the next attempt.
 
 ## Topic map and the struggling signal
 The workbench renders the topic map as a quest path — one continuous trail

@@ -76,14 +76,20 @@ export async function restoreBackup(file: File): Promise<void> {
       db.recommendationEvents.bulkPut(payload.recommendationEvents),
       db.settings.bulkPut(payload.settings)
     ]);
-    // A v2 backup from a coach-fixes-era build carries no gamification row —
-    // rebuild lifetime XP from the restored attempts so it is never left showing
-    // the previous profile's total (or, on a fresh v3 store, zero). Badges are
-    // not replayed (they need the streak clock and are self-healing on the next
-    // attempt); a payload without them restores with none.
-    const gamification: GamificationState = payload.gamification
-      ? { ...payload.gamification, badges: payload.gamification.badges ?? [] }
-      : { key: 'state', xp: replayXp(payload.attempts), badges: [], updatedAt: new Date().toISOString() };
+    // XP is by definition `replayXp(attempts)`, so always rebuild it from the
+    // restored attempts rather than trusting the payload's number: a backup
+    // exported from an older build carries XP computed under an older formula
+    // (e.g. before the streak multiplier), and the Dexie upgrade that would have
+    // re-replayed it does not run on a restore. Deriving it here keeps restore
+    // self-healing across formula changes. Only the badges come from the payload
+    // (they need the streak clock and self-heal on the next attempt anyway); a
+    // payload without them restores with none.
+    const gamification: GamificationState = {
+      key: 'state',
+      xp: replayXp(payload.attempts),
+      badges: payload.gamification?.badges ?? [],
+      updatedAt: new Date().toISOString()
+    };
     await db.gamification.put(gamification);
   });
 }
