@@ -53,16 +53,22 @@ function planSlots(dueCount: number): { reviewSlots: number; newSlots: number } 
   return { reviewSlots: 3, newSlots: 1 };
 }
 
-export function selectDailyPlan({ problems, progress, recommendationEvents, now = new Date() }: DailyPlanInput): DailyPlanItem[] {
+// Every problem due for review today, weakest-and-most-overdue first. Shared by
+// the daily plan (which takes a handful off the top) and the review queue panel
+// (which shows the whole list). `skipUntil` events are *not* filtered here — the
+// queue is the "review everything" surface, so a problem skipped from the daily
+// challenge still shows up as due. The daily plan applies its own skip filter.
+export interface DueReview {
+  problem: CatalogProblem;
+  progress: ProblemProgress;
+}
+
+export function dueReviewQueue(problems: CatalogProblem[], progress: ProblemProgress[], now: Date = new Date()): DueReview[] {
   const today = localToday(now);
   const progressByProblem = new Map(progress.map((item) => [item.problemId, item]));
-  const problemById = new Map(problems.map((problem) => [problem.id, problem]));
-  const hiddenProblemIds = new Set(recommendationEvents.filter((event) => event.skippedUntil !== null && new Date(event.skippedUntil) > now).map((event) => event.problemId));
-
-  const dueReviews = problems
-    .filter((problem) => !hiddenProblemIds.has(problem.id))
+  return problems
     .map((problem) => ({ problem, progress: progressByProblem.get(problem.id) }))
-    .filter((entry): entry is { problem: CatalogProblem; progress: ProblemProgress } => {
+    .filter((entry): entry is DueReview => {
       const next = entry.progress?.nextReviewDate;
       return next !== null && next !== undefined && next <= today;
     })
@@ -71,6 +77,14 @@ export function selectDailyPlan({ problems, progress, recommendationEvents, now 
       (left.progress.nextReviewDate ?? '').localeCompare(right.progress.nextReviewDate ?? '') ||
       left.problem.neetcodeOrder - right.problem.neetcodeOrder
     );
+}
+
+export function selectDailyPlan({ problems, progress, recommendationEvents, now = new Date() }: DailyPlanInput): DailyPlanItem[] {
+  const progressByProblem = new Map(progress.map((item) => [item.problemId, item]));
+  const problemById = new Map(problems.map((problem) => [problem.id, problem]));
+  const hiddenProblemIds = new Set(recommendationEvents.filter((event) => event.skippedUntil !== null && new Date(event.skippedUntil) > now).map((event) => event.problemId));
+
+  const dueReviews = dueReviewQueue(problems, progress, now).filter((entry) => !hiddenProblemIds.has(entry.problem.id));
 
   const { reviewSlots, newSlots } = planSlots(dueReviews.length);
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { selectDailyPlan } from './dailyPlan';
+import { dueReviewQueue, selectDailyPlan } from './dailyPlan';
 import { catalog } from '../data/catalog';
 import type { CatalogProblem, ProblemProgress, RecommendationEvent } from '../types/models';
 
@@ -12,6 +12,25 @@ const problems: CatalogProblem[] = [
 const now = new Date(2026, 6, 19, 12);
 const progress = (problemId: string, changes: Partial<ProblemProgress>): ProblemProgress => ({ problemId, status: 'attempted', reviewStage: 0, nextReviewDate: null, lastAttemptDate: null, lastQuality: null, strongAttemptCount: 0, consecutiveWeak: 0, struggling: false, updatedAt: '', ...changes });
 const event = (problemId: string, kind: RecommendationEvent['kind'], recommendedAt: string, skippedUntil: string | null = null): RecommendationEvent => ({ id: `${problemId}-${recommendedAt}`, problemId, kind, recommendedAt, skippedUntil });
+
+describe('due review queue', () => {
+  it('returns every due problem, weakest last-quality then most overdue first', () => {
+    const queue = dueReviewQueue(problems, [
+      progress('a', { nextReviewDate: '2026-07-10', lastQuality: 'strong' }),
+      progress('b', { nextReviewDate: '2026-07-18', lastQuality: 'weak' }),
+      progress('c', { nextReviewDate: '2026-07-05', lastQuality: 'partial' }),
+      progress('d', { nextReviewDate: '2026-08-01' })
+    ], now);
+    expect(queue.map((entry) => entry.problem.id)).toEqual(['b', 'c', 'a']);
+  });
+  it('includes problems skipped from the daily challenge (queue is the review-everything surface)', () => {
+    const queue = dueReviewQueue(problems, [progress('a', { nextReviewDate: '2026-07-01' })], now);
+    expect(queue.map((entry) => entry.problem.id)).toEqual(['a']);
+  });
+  it('is empty when nothing is due', () => {
+    expect(dueReviewQueue(problems, [progress('a', { nextReviewDate: '2026-08-15' })], now)).toEqual([]);
+  });
+});
 
 describe('daily plan selection', () => {
   it('leads with the two earliest due reviews and still adds a new problem', () => {
