@@ -94,7 +94,11 @@ button, input, select, textarea, a { transition: background-color var(--dur-shor
 
 .path-node.selected .path-node-track { stroke: var(--color-accent); stroke-width: 1.2; }
 .path-node.selected .path-node-label { fill: var(--color-accent); }
-.path-node:focus-visible { outline: none; }
+/* The UA focus rectangle on the <g> is a box round the node's bounds — it covers
+   the label sitting just above the node. Suppress it for both plain focus (mouse
+   click) and focus-visible (keyboard), and carry the focus cue on the ring
+   stroke instead, which stays inside the node. */
+.path-node:focus, .path-node:focus-visible { outline: none; }
 .path-node:focus-visible .path-node-track { stroke: var(--color-focus); stroke-width: 1.4; }
 @media (hover: hover) and (pointer: fine) {
   .path-node:hover .path-node-core { stroke: var(--color-accent); stroke-width: 0.7; }
