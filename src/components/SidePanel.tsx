@@ -6,13 +6,15 @@ import { STATUS_HINTS, STATUS_LABELS } from '../services/statusLabels';
 //  - topic:  the problems of one topic (from a map node) — side panel
 //  - search: problems matching the workbench search box — side panel
 //  - problem: one problem's detail (attempt form + history), reached from either
-//    list. This one is NOT a side panel: `Workbench` renders it full-bleed in
-//    place of the map, so working on a problem gets the whole screen. `back`
-//    carries the list it was opened from, which the Back button returns to.
+//    list or from the daily challenge. This one is NOT a side panel: `Workbench`
+//    renders it full-bleed in place of the map, so working on a problem gets the
+//    whole screen. `back` carries the list it was opened from, which the Back
+//    button returns to; it is null when opened from the daily challenge, so Back
+//    returns to the bare map.
 export type Panel =
   | { kind: 'topic'; topic: string }
   | { kind: 'search'; query: string }
-  | { kind: 'problem'; problem: CatalogProblem; back: Panel };
+  | { kind: 'problem'; problem: CatalogProblem; back: Panel | null };
 
 interface SidePanelProps {
   panel: Panel;

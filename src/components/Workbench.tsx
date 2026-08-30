@@ -91,7 +91,7 @@ export function Workbench({ attempts, problems, progress, progressByProblem, set
   // problem opened from that topic panel is showing.
   const selectedTopic =
     panel?.kind === 'topic' ? panel.topic
-      : panel?.kind === 'problem' && panel.back.kind === 'topic' ? panel.back.topic
+      : panel?.kind === 'problem' && panel.back?.kind === 'topic' ? panel.back.topic
       : null;
 
   const toggleTopic = (topic: string) => {
@@ -110,7 +110,7 @@ export function Workbench({ attempts, problems, progress, progressByProblem, set
     <div className="workbench-stats" aria-label="Progress summary">
       <span><b>{streak}</b> day streak{graceDaysUsed > 0 && <> · <span className="grace-note">{graceDaysUsed} grace {graceDaysUsed === 1 ? 'day' : 'days'}</span></>}</span>
       <span><b>{attemptsThisWeek}</b> attempts · 7 days</span>
-      <span><b>{dueReviews}</b> due reviews</span>
+      <span><b>{dueReviews}</b> for review</span>
       <button
         type="button"
         className="challenge-trigger"
@@ -155,7 +155,15 @@ export function Workbench({ attempts, problems, progress, progressByProblem, set
         </div>}
 
     {challengeOpen && <Overlay label="Today's challenge" onClose={() => setChallengeOpen(false)}>
-      <DailyPlan items={planItems} completedProblemIds={completedProblemIds} onSkip={onSkip} />
+      <DailyPlan
+        items={planItems}
+        completedProblemIds={completedProblemIds}
+        onSkip={onSkip}
+        onOpenProblem={(problem) => {
+          setChallengeOpen(false);
+          setPanel({ kind: 'problem', problem, back: null });
+        }}
+      />
     </Overlay>}
 
   </section>;
