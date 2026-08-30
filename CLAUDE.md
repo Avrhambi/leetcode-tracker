@@ -35,7 +35,7 @@ Do not add a dependency without asking first, and explain why existing code can'
   `attemptForm.ts` (outcome→field rules), `constants.ts` (every threshold and curve),
   `topicPath.ts` (topic-map route geometry — pure, so placement is deterministic),
   `statusLabels.ts` (display-only names for the stored `ProgressStatus` enum — the
-  enum itself is persisted and must not be renamed; see `docs/SPEC.md`).
+  enum itself is persisted and must not be renamed).
 - `src/db/` — **direct Dexie calls only**, no repository/adapter/factory/queue/cache/retry.
   `database.ts` holds the versioned schema + migrations; `saveAttempt.ts` writes attempt +
   progress + recommendation completion + XP + badges in **one transaction**; `backup.ts`
@@ -50,8 +50,6 @@ Do not add a dependency without asking first, and explain why existing code can'
   daily challenge both use it) — don't write a second one.
 - `src/styles/` — `../../tokens.css` (oklch dark "phosphor green" design tokens),
   `global.css`, `gamification.css` (`@import`ed from `global.css`). Plain CSS.
-- `docs/` — `SPEC.md` (behaviour spec), `SCHEMA.md` (data model), `MILESTONES.md`,
-  `QA.md` (manual test cases). Keep these in sync with behaviour changes.
 
 ## Architecture invariants
 
@@ -64,8 +62,8 @@ Do not add a dependency without asking first, and explain why existing code can'
 - **Level and badge state are derived, not stored where they can drift.** Level is
   `floor(sqrt(xp / 50))`, computed on read. Badges are a monotonic union — never
   un-earned. XP is the only persisted gamification number, and it is reconstructible from
-  the `attempts` history alone (`replayXp`), which the Dexie v3 migration and backup
-  restore both rely on.
+  the `attempts` history alone (`replayXp`), which the Dexie v3/v4 migrations and backup
+  restore all rely on.
 - **All recommendation and review rules are deterministic and unit-tested.** No
   wall-clock reads inside the pure functions — dates are passed in as `YYYY-MM-DD` local
   strings.
@@ -75,8 +73,7 @@ Do not add a dependency without asking first, and explain why existing code can'
   *scales*: it is an SVG on a fixed viewBox, so it fits any box by construction and
   needs no per-width tuning. Verify layout changes in a browser — `npm run verify`
   cannot see overflow, and "the page doesn't scroll" can pass while content is
-  crushed, overlapping, or (for the map) scaled into illegibility. See `docs/QA.md`,
-  "Responsive and production", for the assertions that actually discriminate.
+  crushed, overlapping, or (for the map) scaled into illegibility.
 - **All animation sits behind `prefers-reduced-motion`.** The global rule in `global.css`
   clamps durations; showy gamification animations additionally get `animation: none`.
 

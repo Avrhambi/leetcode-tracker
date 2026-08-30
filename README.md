@@ -82,6 +82,6 @@ Requires Node.js 22.12+. Stack: React 19 + TypeScript + Vite, Dexie/IndexedDB,
 plain CSS. The 150-problem catalog is bundled — first launch seeds it and you're
 ready to go.
 
-See [`docs/`](docs/) for the full specification (`SPEC.md`), data model
-(`SCHEMA.md`), and manual test cases (`QA.md`).
+See [`CLAUDE.md`](CLAUDE.md) for the architecture notes, invariants, and
+conventions.
 

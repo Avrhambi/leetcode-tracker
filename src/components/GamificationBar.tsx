@@ -13,7 +13,7 @@ interface GamificationBarProps {
 // Minimal XP / level strip. The fill width transitions on XP change. When the
 // level rises while this component is mounted, a one-shot pulse plays; a level-up
 // that happened while the user was on another screen is not replayed (nothing
-// stores what was last announced — an accepted limitation, see docs/SPEC.md).
+// stores what was last announced — an accepted limitation).
 export function GamificationBar({ snapshot, streakDays }: GamificationBarProps) {
   const { level, xp, xpIntoLevel, xpForNextLevel } = snapshot;
   const pct = xpForNextLevel > 0 ? Math.round((xpIntoLevel / xpForNextLevel) * 100) : 100;
